@@ -1,0 +1,83 @@
+From 1ea81aced10321f32b47bccf4a9c7fabcc317cd3 Mon Sep 17 00:00:00 2001
+From: yzewei <yangzewei@loongson.cn>
+Date: Wed, 10 Apr 2024 09:02:42 +0800
+Subject: [PATCH] add loong64 support (abi2.0)
+
+Signed-off-by: yzewei <yangzewei@loongson.cn>
+---
+ Dockerfile | 8 ++------
+ Makefile   | 4 +++-
+ version.go | 2 +-
+ 3 files changed, 6 insertions(+), 8 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 9ddd1e5..a31e483 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -15,7 +15,7 @@
+ # limitations under the License.
+ #
+ 
+-ARG BASE=golang:1.20-alpine3.17
++ARG BASE=lcr.loongnix.cn/library/golang:1.19-alpine
+ FROM ${BASE} AS builder
+ 
+ ARG MAKE="make cmd/edgex-ui-server/edgex-ui-server"
+@@ -27,11 +27,7 @@ LABEL Name=edgex-ui-go
+ LABEL license='SPDX-License-Identifier: Apache-2.0' \
+   copyright='Copyright (c) 2018-2023: Intel'
+ 
+-# Need the docker client for CI builds of the web components.
+-COPY --from=docker:latest /usr/local/bin/docker /usr/local/bin/docker
+-
+ RUN apk add --update --no-cache ${ALPINE_PKG_BASE} ${ALPINE_PKG_EXTRA}
+-
+ ENV GO111MODULE=on
+ WORKDIR /go/src/github.com/edgexfoundry/edgex-ui-go
+ 
+@@ -41,7 +37,7 @@ RUN [ ! -d "vendor" ] && go mod download all || echo "skipping..."
+ COPY . .
+ RUN ${MAKE}
+ 
+-FROM alpine:3.17
++FROM lcr.loongnix.cn/library/alpine:3.19
+ 
+ EXPOSE 4000
+ 
+diff --git a/Makefile b/Makefile
+index d5cc7da..a9850e7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -20,7 +20,6 @@
+ 
+ GO=CGO_ENABLED=0 GO111MODULE=on go
+ GOCGO=CGO_ENABLED=1 GO111MODULE=on go
+-
+ MICROSERVICES=cmd/edgex-ui-server/edgex-ui-server
+ .PHONY: $(MICROSERVICES)
+ 
+@@ -76,8 +75,11 @@ docker: $(DOCKERS)
+ 
+ docker_edgex_ui_go:
+ 	docker build --label "git_sha=$(GIT_SHA)" \
++	--build-arg https_proxy=$(https_proxy) \
++	--build-arg http_proxy=$(http_proxy) \
+ 	-t edgexfoundry/edgex-ui:$(GIT_SHA) \
+ 	-t edgexfoundry/edgex-ui:$(VERSION)-dev \
++	-t lcr.loongnix.cn/edgexfoundry/edgex-ui:3.0.0 \
+ 	.
+ 
+ vendor:
+diff --git a/version.go b/version.go
+index 65ec37d..0a3596e 100644
+--- a/version.go
++++ b/version.go
+@@ -7,4 +7,4 @@
+ package edgex
+ 
+ // Global version for edgex-go
+-var Version string = "master"
++var Version string = "3.0.0"
+-- 
+2.41.0
+

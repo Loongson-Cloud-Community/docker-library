@@ -5,13 +5,13 @@ RUN apk add --no-cache ca-certificates
 # set up nsswitch.conf for Go's "netgo" implementation
 # - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
 # - docker run --rm debian grep '^hosts:' /etc/nsswitch.conf
-#RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
+#RUN [ ! -e /echo/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
 
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.21.0
+ENV GOLANG_VERSION 1.20.12
 
-# Bootstrap for Go1.21 requires minimum Go1.17, now build Go1.19 as bootstrap for Go1.21.x
+# Bootstrap for Go1.20 requires minimum Go1.17, now build Go1.19 as bootstrap for Go1.20.x
 RUN set -eux; \
 	build=1; \
 	url='http://ftp.loongnix.cn/toolchain/golang/go-1.19/abi2.0/go1.19.7.src.tar.gz'; \
@@ -40,8 +40,8 @@ RUN set -eux; \
 RUN set -eux; \
 	build=1; \
 # https://github.com/golang/go/issues/38536#issuecomment-616897960
-	url='http://ftp.loongnix.cn/toolchain/golang/go-1.21/abi2.0/go1.21.0.src.tar.gz'; \
-	sha256='8734d66ac4ac4d22fb6faae8155abc5a2e38cd3c2954b5377e9d4cfbbf566f34'; \
+	url='http://ftp.loongnix.cn/toolchain/golang/go-1.20/abi2.0/go1.20.12.src.tar.gz'; \
+	sha256='383b02b0f59e47d04cee0dd7bd0b98e0c960fa038e633f0067cc009db98f05cd'; \
 	export GOARCH='loong64' GOOS='linux'; \
 	\
 	wget -O go.tgz "$url"; \

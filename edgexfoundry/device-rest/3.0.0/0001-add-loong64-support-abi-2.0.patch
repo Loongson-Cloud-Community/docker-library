@@ -1,0 +1,75 @@
+From af692cbe218524bb7effbd70def89645e6654b88 Mon Sep 17 00:00:00 2001
+From: yzewei <yangzewei@loongson.cn>
+Date: Wed, 24 Apr 2024 10:22:59 +0800
+Subject: [PATCH] add loong64 support (abi-2.0)
+
+Signed-off-by: yzewei <yangzewei@loongson.cn>
+---
+ Dockerfile | 4 ++--
+ Makefile   | 8 +++++---
+ version.go | 2 +-
+ 3 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index c5604b7..9abc24b 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -33,7 +33,7 @@ RUN [ ! -d "vendor" ] && go mod download all || echo "skipping..."
+ COPY . .
+ RUN $MAKE
+ 
+-FROM alpine:3.17
++FROM lcr.loongnix.cn/library/alpine:3.19
+ 
+ LABEL license='SPDX-License-Identifier: Apache-2.0' \
+   copyright='Copyright (c) 2022: Intel'
+@@ -50,4 +50,4 @@ COPY --from=builder /device-rest-go/Attribution.txt /
+ EXPOSE 59986
+ 
+ ENTRYPOINT ["/device-rest"]
+-CMD ["--cp=consul://edgex-core-consul:8500", "--registry"]
+\ No newline at end of file
++CMD ["--cp=consul://edgex-core-consul:8500", "--registry"]
+diff --git a/Makefile b/Makefile
+index c614b6d..a024c1d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,7 +23,7 @@ tidy:
+ 	go mod tidy
+ 
+ cmd/device-rest:
+-	CGO_ENABLED=0 go build -tags "$(ADD_BUILD_TAGS)" $(GOFLAGS) -o $@ ./cmd
++	go get github.com/edgexfoundry/device-rest-go/driver && go mod tidy && CGO_ENABLED=0 go build -tags "$(ADD_BUILD_TAGS)" $(GOFLAGS) -o $@ ./cmd
+ 
+ unittest:
+ 	go test ./... -coverprofile=coverage.out ./...
+@@ -51,12 +51,14 @@ docker: $(DOCKERS)
+ 
+ docker_device_rest_go:
+ 	docker build \
++		--build-arg BASE="lcr.loongnix.cn/library/golang:1.20-alpine" \
+ 		--build-arg ADD_BUILD_TAGS=$(ADD_BUILD_TAGS) \
+-		--build-arg http_proxy \
+-		--build-arg https_proxy \
++		--build-arg http_proxy=$(http_proxy) \
++		--build-arg https_proxy=$(https_proxy) \
+ 		--label "git_sha=$(GIT_SHA)" \
+ 		-t edgexfoundry/device-rest:$(GIT_SHA) \
+ 		-t edgexfoundry/device-rest:$(VERSION)-dev \
++		-t lcr.loongnix.cn/edgexfoundry/device-rest:3.0.0 \
+ 		.
+ 
+ docker-nats:
+diff --git a/version.go b/version.go
+index cdc7f37..3f09249 100644
+--- a/version.go
++++ b/version.go
+@@ -17,4 +17,4 @@
+ package device_rest
+ 
+ // Global version for device-sdk-go
+-var Version string = "to be replaced by makefile"
++var Version string = "3.0.0"
+-- 
+2.41.0
+

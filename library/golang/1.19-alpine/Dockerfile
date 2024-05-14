@@ -9,39 +9,13 @@ RUN apk add --no-cache ca-certificates
 
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.21.0
-
-# Bootstrap for Go1.21 requires minimum Go1.17, now build Go1.19 as bootstrap for Go1.21.x
-RUN set -eux; \
-	build=1; \
-	url='http://ftp.loongnix.cn/toolchain/golang/go-1.19/abi2.0/go1.19.7.src.tar.gz'; \
-	sha256='cf3d38154f15b64d141800e3a98dbd73df7c829eec87ebe2df1d5c7c93013206'; \
-	export GOARCH='loong64' GOOS='linux'; \
-	\
-	wget -O go.tgz "$url"; \
-	echo "$sha256 *go.tgz" | sha256sum -c -; \
-	\
-	tar -C /usr/local -xzf go.tgz; \
-	rm go.tgz; \
-	\
-	apk add --no-cache --virtual .build-deps bash gcc go musl-dev; \
-	\
-	cd /usr/local/go/src; \
-	export GOCACHE='/tmp/gocache'; \
-	export GOROOT_BOOTSTRAP="$(go env GOROOT)" GOHOSTOS="$GOOS" GOHOSTARCH="$GOARCH"; \
-	./make.bash; \
-	\
-	cd ../../ && mv go go-bootstrap; \
-	rm -rf "$GOCACHE"; \
-	\
-	/usr/local/go-bootstrap/bin/go version
-
+ENV GOLANG_VERSION 1.19.11
 
 RUN set -eux; \
 	build=1; \
 # https://github.com/golang/go/issues/38536#issuecomment-616897960
-	url='http://ftp.loongnix.cn/toolchain/golang/go-1.21/abi2.0/go1.21.0.src.tar.gz'; \
-	sha256='8734d66ac4ac4d22fb6faae8155abc5a2e38cd3c2954b5377e9d4cfbbf566f34'; \
+	url='http://ftp.loongnix.cn/toolchain/golang/go-1.19/abi2.0/go1.19.11.src.tar.gz'; \
+	sha256='92fbf94d2c77b222d1b75fd9f3edc8f7d05c13aa986d4a5e5c1bafb6f262ee97'; \
 	export GOARCH='loong64' GOOS='linux'; \
 	\
 	wget -O go.tgz "$url"; \
@@ -63,7 +37,7 @@ RUN set -eux; \
 		( \
 			cd /usr/local/go/src; \
 # set GOROOT_BOOTSTRAP + GOHOST* such that we can build Go successfully
-			export GOROOT_BOOTSTRAP="/usr/local/go-bootstrap" GOHOSTOS="$GOOS" GOHOSTARCH="$GOARCH"; \
+			export GOROOT_BOOTSTRAP="$(go env GOROOT)" GOHOSTOS="$GOOS" GOHOSTARCH="$GOARCH"; \
 			if [ "${GOARCH:-}" = '386' ]; then \
 # https://github.com/golang/go/issues/52919; https://github.com/docker-library/golang/pull/426#issuecomment-1152623837
 				export CGO_CFLAGS='-fno-stack-protector'; \
@@ -82,7 +56,6 @@ RUN set -eux; \
 			/usr/local/go/pkg/tool/*/go_bootstrap \
 			/usr/local/go/src/cmd/dist/dist \
 			"$GOCACHE" \
-			/usr/local/go-bootstrap \
 		; \
 	fi; \
 	\

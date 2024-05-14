@@ -1,0 +1,56 @@
+From 334c22ef1253723f4ef444fcee3728fb7f571532 Mon Sep 17 00:00:00 2001
+From: yzewei <yangzewei@loongson.cn>
+Date: Wed, 24 Apr 2024 11:16:02 +0800
+Subject: [PATCH] add loong64 support (abi-2.0)
+
+Signed-off-by: yzewei <yangzewei@loongson.cn>
+---
+ Dockerfile | 2 +-
+ Makefile   | 5 +++--
+ version.go | 2 +-
+ 3 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 74f5a90..cd01e47 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -37,7 +37,7 @@ COPY . .
+ ARG MAKE="make -e ADD_BUILD_TAGS=$ADD_BUILD_TAGS build"
+ RUN $MAKE
+ 
+-FROM alpine:3.17
++FROM lcr.loongnix.cn/library/alpine:3.19
+ 
+ LABEL license='SPDX-License-Identifier: Apache-2.0' \
+   copyright='Copyright (c) 2019-2021: IOTech'
+diff --git a/Makefile b/Makefile
+index f089e8d..9fa8b63 100644
+--- a/Makefile
++++ b/Makefile
+@@ -49,10 +49,11 @@ docker: $(DOCKERS)
+ 
+ docker_device_virtual_go:
+ 	docker build \
++		--build-arg BASE="lcr.loongnix.cn/library/golang:1.20-alpine" \
+ 		--build-arg ADD_BUILD_TAGS=$(ADD_BUILD_TAGS) \
++		--build-arg https_proxy=$(https_proxy) \
+ 		--label "git_sha=$(GIT_SHA)" \
+-		-t edgexfoundry/device-virtual:$(GIT_SHA) \
+-		-t edgexfoundry/device-virtual:$(VERSION)-dev \
++		-t lcr.loongnix.cn/edgexfoundry/device-virtual:3.0.0 \
+ 		.
+ 
+ docker-nats:
+diff --git a/version.go b/version.go
+index 2908fd5..e8fb453 100644
+--- a/version.go
++++ b/version.go
+@@ -7,4 +7,4 @@
+ package device_virtual
+ 
+ // Global version for device-sdk-go
+-var Version string = "to be replaced by makefile"
++var Version string = "3.0.0"
+-- 
+2.41.0
+

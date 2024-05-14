@@ -1,0 +1,92 @@
+From 2dff2e0569cb9bae31bb48d2d6459c5e700b1f46 Mon Sep 17 00:00:00 2001
+From: yzewei <yangzewei@loongson.cn>
+Date: Wed, 24 Apr 2024 09:14:12 +0800
+Subject: [PATCH] add loong64 support (abi-2.0)
+
+Signed-off-by: yzewei <yangzewei@loongson.cn>
+---
+ Dockerfile | 9 +++++----
+ Makefile   | 7 ++++---
+ version.go | 2 +-
+ 3 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 1785ddb..7283b8f 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -15,7 +15,7 @@
+ # limitations under the License.
+ #
+ 
+-ARG BASE=golang:1.18-alpine3.16
++ARG BASE=lcr.loongnix.cn/library/golang:1.19-alpine
+ FROM ${BASE} AS builder
+ 
+ ARG ADD_BUILD_TAGS=""
+@@ -23,7 +23,8 @@ ARG MAKE="make -e ADD_BUILD_TAGS=$ADD_BUILD_TAGS build"
+ ARG ALPINE_PKG_BASE="make git openssh-client gcc libc-dev zeromq-dev libsodium-dev"
+ ARG ALPINE_PKG_EXTRA=""
+ 
+-RUN apk add --update --no-cache ${ALPINE_PKG_BASE} ${ALPINE_PKG_EXTRA}
++#RUN apk add --update --no-cache ${ALPINE_PKG_BASE} ${ALPINE_PKG_EXTRA}
++RUN apk add --update make git openssh-client gcc libc-dev zeromq-dev libsodium-dev
+ 
+ WORKDIR /device-rest-go
+ 
+@@ -33,7 +34,7 @@ RUN [ ! -d "vendor" ] && go mod download all || echo "skipping..."
+ COPY . .
+ RUN $MAKE
+ 
+-FROM alpine:3.16
++FROM lcr.loongnix.cn/library/alpine:3.19
+ 
+ LABEL license='SPDX-License-Identifier: Apache-2.0' \
+   copyright='Copyright (c) 2022: Intel'
+@@ -50,4 +51,4 @@ COPY --from=builder /device-rest-go/Attribution.txt /
+ EXPOSE 59986
+ 
+ ENTRYPOINT ["/device-rest"]
+-CMD ["--cp=consul://edgex-core-consul:8500", "--confdir=/res", "--registry"]
+\ No newline at end of file
++CMD ["--cp=consul://edgex-core-consul:8500", "--confdir=/res", "--registry"]
+diff --git a/Makefile b/Makefile
+index 5741414..fad1a01 100644
+--- a/Makefile
++++ b/Makefile
+@@ -18,7 +18,7 @@ ARCH=$(shell uname -m)
+ DOCKERS=docker_device_rest_go
+ .PHONY: $(DOCKERS)
+ 
+-VERSION=$(shell cat ./VERSION 2>/dev/null || echo 0.0.0)
++VERSION=2.3.0
+ 
+ GIT_SHA=$(shell git rev-parse HEAD)
+ GOFLAGS=-ldflags "-X github.com/edgexfoundry/device-rest-go.Version=$(VERSION)" -trimpath -mod=readonly
+@@ -59,11 +59,12 @@ docker: $(DOCKERS)
+ docker_device_rest_go:
+ 	docker build \
+ 		--build-arg ADD_BUILD_TAGS=$(ADD_BUILD_TAGS) \
+-		--build-arg http_proxy \
+-		--build-arg https_proxy \
++		--build-arg http_proxy=$(http_proxy) \
++		--build-arg https_proxy=$(https_proxy) \
+ 		--label "git_sha=$(GIT_SHA)" \
+ 		-t edgexfoundry/device-rest:$(GIT_SHA) \
+ 		-t edgexfoundry/device-rest:$(VERSION)-dev \
++		-t lcr.loongnix.cn/edgexfoundry/device-rest:$(VERSION) \
+ 		.
+ 
+ docker-nats:
+diff --git a/version.go b/version.go
+index cdc7f37..a70ef25 100644
+--- a/version.go
++++ b/version.go
+@@ -17,4 +17,4 @@
+ package device_rest
+ 
+ // Global version for device-sdk-go
+-var Version string = "to be replaced by makefile"
++var Version string = "2.3.0"
+-- 
+2.41.0
+

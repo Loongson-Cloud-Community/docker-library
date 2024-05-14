@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -ev
+
+curl -L -o /usr/bin/gitlab-runner https://github.com/Loongson-Cloud-Community/gitlab-runner/releases/download/v13.11.0-abi2/gitlab-runner-linux-loong64
+chmod +x /usr/bin/gitlab-runner
+ln -s /usr/bin/gitlab-runner /usr/bin/gitlab-ci-multi-runner
+## 后续cloud网站上线更换
+#wget http://cloud.loongnix.cn/releases/loongarch64/gitlabhq%2Fgitlab-runner%2Fv13.11.0%2Fgitlab-runner-linux-loong64.tar.gz && tar xf gitlab-runner-linux-loong64.tar.gz && mv gitlab-runner-linux-loong64 /usr/bin
+#mv "/usr/bin/gitlab-runner-linux-loong64" /usr/bin/gitlab-runner
