@@ -12,7 +12,7 @@ KUIPER?=kuiper-1.6.3-linux-loong64
 TAR_GZ?=$(KUIPER).tar.gz
 
 #URL?=https://github.com/Loongson-Cloud-Community/ekuiper/releases/download/1.6.3/kuiper-1.6.3-linux-loong64.tar.gz
-URL?=http://cloud.loongnix.cn/releases/loongarch64/lf-edge%2Fekuiper%2F1.6.3/ekuiper-linux-loong64.tar.gz
+URL?=http://cloud.loongnix.cn/releases/loongarch64/lf-edge/ekuiper/1.6.3/ekuiper-linux-loong64.tar.gz
 
 default: image
 
