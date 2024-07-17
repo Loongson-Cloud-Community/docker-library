@@ -45,4 +45,5 @@ RUN set -ex; \
 		xz-utils \
 		zlib1g-dev \
 	; \
+	apt-get clean; \
 	rm -rf /var/lib/apt/lists/*
