@@ -1,0 +1,115 @@
+diff --git a/Makefile b/Makefile
+index 0f55375..8132a59 100644
+--- a/Makefile
++++ b/Makefile
+@@ -36,7 +36,7 @@ RELEASE_IMAGE_NAMES_LATEST += $(foreach arch, $(ARCHITECTURES), $(RELEASE_IMAGE)
+ HEAD_IMAGE = kubernetesdashboarddev/dashboard
+ HEAD_VERSION = latest
+ HEAD_IMAGE_NAMES += $(foreach arch, $(ARCHITECTURES), $(HEAD_IMAGE)-$(arch):$(HEAD_VERSION))
+-ARCHITECTURES = amd64 arm64 arm ppc64le s390x
++ARCHITECTURES = loong64
+ 
+ .PHONY: ensure-version
+ ensure-version:
+@@ -54,10 +54,10 @@ ensure-codegen: ensure-go
+ 	go mod tidy
+ 	chmod +x $(CODEGEN_BIN)
+ 
+-.PHONY: ensure-air
++#.PHONY: ensure-air
+ ensure-air:
+ ifndef AIR_BINARY
+-	curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(GOPATH)/bin
++#	curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(GOPATH)/bin
+ endif
+ 
+ .PHONY: ensure-go
+@@ -104,7 +104,7 @@ run-backend:
+ 		--enable-insecure-login=$(ENABLE_INSECURE_LOGIN) \
+ 		--enable-skip-login=$(ENABLE_SKIP_LOGIN)
+ 
+-.PHONY: watch-backend
++#.PHONY: watch-backend
+ watch-backend: ensure-air
+ 	air
+ 
+@@ -123,7 +123,7 @@ prod: build
+ 	$(PROD_BINARY) --kubeconfig=$(KUBECONFIG) \
+ 		--sidecar-host=$(SIDECAR_HOST) \
+ 		--auto-generate-certificates \
+-		--locale-config=dist/amd64/locale_conf.json \
++		--locale-config=dist/loong64/locale_conf.json \
+ 		--bind-address=${BIND_ADDRESS} \
+ 		--port=${PORT}
+ 
+@@ -245,8 +245,8 @@ e2e-headed: start-cluster
+ docker-build-release: build-cross
+ 	for ARCH in $(ARCHITECTURES) ; do \
+ 		docker buildx build \
+-			-t $(RELEASE_IMAGE)-$$ARCH:$(RELEASE_VERSION) \
+-			-t $(RELEASE_IMAGE)-$$ARCH:latest \
++			-t lcr.loongnix.cn/$(RELEASE_IMAGE)-$$ARCH:$(RELEASE_VERSION) \
++			-t  lcr.loongnix.cn/$(RELEASE_IMAGE)-$$ARCH:latest \
+ 			--build-arg BUILDPLATFORM=linux/$$ARCH \
+ 			--platform linux/$$ARCH \
+ 			--push \
+diff --git a/aio/Dockerfile b/aio/Dockerfile
+index 9dd40d9..b98faa1 100644
+--- a/aio/Dockerfile
++++ b/aio/Dockerfile
+@@ -17,14 +17,14 @@
+ 
+ ARG BUILDPLATFORM
+ 
+-FROM --platform=$BUILDPLATFORM ubuntu:20.04 as builder
++FROM lcr.loongnix.cn/library/debian:sid as builder
+ 
+ # Create a nonroot user for final image
+ RUN useradd -u 10001 nonroot
+ 
+ # Scratch can be used as the base image because the backend is compiled to include all
+ # its dependencies.
+-FROM --platform=$BUILDPLATFORM scratch as final
++FROM scratch as final
+ 
+ # Add all files from current working directory to the root of the image, i.e., copy dist directory
+ # layout to the root directory.
+diff --git a/angular.json b/angular.json
+index b3b951e..e0f051f 100644
+--- a/angular.json
++++ b/angular.json
+@@ -107,7 +107,7 @@
+                 }
+               ],
+               "aot": true,
+-              "optimization": true,
++              "optimization": false,
+               "outputHashing": "all",
+               "sourceMap": false,
+               "namedChunks": false,
+diff --git a/package-lock.json b/package-lock.json
+index 6d0c5b3..a39a950 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -77,7 +77,7 @@
+         "eslint-plugin-node": "11.1.0",
+         "eslint-plugin-prettier": "4.0.0",
+         "eslint-plugin-rxjs": "5.0.2",
+-        "git-describe": "4.1.1",
++        "git-describe": "^4.1.1",
+         "gts": "3.1.0",
+         "husky": "8.0.1",
+         "jasmine-core": "4.1.1",
+diff --git a/package.json b/package.json
+index 45a02e5..d0b6311 100644
+--- a/package.json
++++ b/package.json
+@@ -133,7 +133,7 @@
+     "eslint-plugin-node": "11.1.0",
+     "eslint-plugin-prettier": "4.0.0",
+     "eslint-plugin-rxjs": "5.0.2",
+-    "git-describe": "4.1.1",
++    "git-describe": "^4.1.1",
+     "gts": "3.1.0",
+     "husky": "8.0.1",
+     "jasmine-core": "4.1.1",
