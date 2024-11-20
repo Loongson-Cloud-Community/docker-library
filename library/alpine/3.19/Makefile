@@ -24,7 +24,7 @@ push: alias
 	docker push $(ALIAS)
 
 $(ROOTFS):
-	wget -O $(ROOTFS) https://dev.alpinelinux.org/~loongarch/edge/releases/loongarch64/alpine-minirootfs-edge-240514-loongarch64.tar.gz
+	wget -O $(ROOTFS) https://dl-cdn.alpinelinux.org/alpine/edge/releases/loongarch64/alpine-minirootfs-20240923-loongarch64.tar.gz
 
 alias:
 	docker tag $(IMAGE) $(ALIAS)

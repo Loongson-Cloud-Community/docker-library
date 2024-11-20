@@ -1,0 +1,50 @@
+diff --git a/oss/Dockerfile b/oss/Dockerfile
+index cb0de0b..cf671bc 100644
+--- a/oss/Dockerfile
++++ b/oss/Dockerfile
+@@ -12,7 +12,8 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-FROM registry.access.redhat.com/ubi7/ubi
++#FROM registry.access.redhat.com/ubi7/ubi
++FROM lcr.loongnix.cn/openanolis/anolisos:23.1
+ 
+ LABEL vendor=Sonatype \
+   maintainer="Sonatype <cloud-ops@sonatype.com>" \
+@@ -25,9 +26,7 @@ ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/oss/nexus-${NEXUS_VER
+ ENV SONATYPE_WORK=/sonatype-work
+ ENV NEXUS_HOME=/opt/sonatype/nexus
+ 
+-RUN yum install -v -y --disableplugin=subscription-manager hostname java-1.8.0-openjdk-headless \
+-  && yum-config-manager --add-repo http://mirror.centos.org/centos/7/os/x86_64/ \
+-  && rpm --import http://mirror.centos.org/centos/7/os/x86_64/RPM-GPG-KEY-CentOS-7 \
++RUN yum install -v -y --disableplugin=subscription-manager hostname java-1.8.0-openjdk-headless tar \
+   && yum install -v -y createrepo \
+   && yum --disableplugin=subscription-manager clean all
+ 
+diff --git a/pro/Dockerfile b/pro/Dockerfile
+index 5336f0f..1b79de9 100644
+--- a/pro/Dockerfile
++++ b/pro/Dockerfile
+@@ -12,7 +12,8 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-FROM registry.access.redhat.com/ubi7/ubi
++#FROM registry.access.redhat.com/ubi7/ubi
++FROM lcr.loongnix.cn/openanolis/anolisos:23.1
+ 
+ LABEL vendor=Sonatype \
+   maintainer="Sonatype <cloud-ops@sonatype.com>" \
+@@ -25,9 +26,7 @@ ARG NEXUS_DOWNLOAD_URL=https://download.sonatype.com/nexus/professional-bundle/n
+ ENV SONATYPE_WORK=/sonatype-work
+ ENV NEXUS_HOME=/opt/sonatype/nexus
+ 
+-RUN yum install -v -y --disableplugin=subscription-manager hostname java-1.8.0-openjdk-headless \
+-  && yum-config-manager --add-repo http://mirror.centos.org/centos/7/os/x86_64/ \
+-  && rpm --import http://mirror.centos.org/centos/7/os/x86_64/RPM-GPG-KEY-CentOS-7 \
++RUN yum install -v -y --disableplugin=subscription-manager hostname java-1.8.0-openjdk-headless tar \
+   && yum install -v -y createrepo \
+   && yum --disableplugin=subscription-manager clean all
+ 
