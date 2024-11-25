@@ -1,0 +1,20 @@
+[rawhide]
+name=Fedora - Rawhide - Developmental packages for the next Fedora release
+baseurl=https://mirrors.wsyu.edu.cn/fedora/linux/development/rawhide//Everything/$basearch/os/
+#metalink=https://mirrors.fedoraproject.org/metalink?repo=rawhide&arch=$basearch
+enabled=1
+countme=1
+metadata_expire=6h
+repo_gpgcheck=0
+type=rpm
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-rawhide-$basearch file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-39-$basearch
+skip_if_unavailable=False
+
+[gh-cli]
+name=packages for the GitHub CLI
+baseurl=https://cli.github.com/packages/rpm
+enabled=1
+gpgkey=https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x23F3D4EA75716059
+
+

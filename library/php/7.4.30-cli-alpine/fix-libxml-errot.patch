@@ -1,0 +1,193 @@
+diff --git a/ext/dom/document.c b/ext/dom/document.c
+index b478e1a1..707a1fbb 100644
+--- a/ext/dom/document.c
++++ b/ext/dom/document.c
+@@ -25,6 +25,7 @@
+ #if HAVE_LIBXML && HAVE_DOM
+ #include "php_dom.h"
+ #include <libxml/SAX.h>
++#include <libxml/xmlsave.h>
+ #ifdef LIBXML_SCHEMAS_ENABLED
+ #include <libxml/relaxng.h>
+ #include <libxml/xmlschemas.h>
+diff --git a/ext/libxml/libxml.c b/ext/libxml/libxml.c
+index d343135b..d3f37b4b 100644
+--- a/ext/libxml/libxml.c
++++ b/ext/libxml/libxml.c
+@@ -530,7 +530,11 @@ static int _php_libxml_free_error(xmlErrorPtr error)
+ 	return 1;
+ }
+ 
+-static void _php_list_set_error_structure(xmlErrorPtr error, const char *msg)
++#if LIBXML_VERSION >= 21200
++static void _php_list_set_error_structure(const xmlError *error, const char *msg)
++#else
++static void _php_list_set_error_structure(xmlError *error, const char *msg)
++#endif
+ {
+ 	xmlError error_copy;
+ 	int ret;
+@@ -782,7 +786,11 @@ PHP_LIBXML_API void php_libxml_ctx_warning(void *ctx, const char *msg, ...)
+ 	va_end(args);
+ }
+ 
++#if LIBXML_VERSION >= 21200
++PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, const xmlError *error)
++#else
+ PHP_LIBXML_API void php_libxml_structured_error_handler(void *userData, xmlErrorPtr error)
++#endif
+ {
+ 	_php_list_set_error_structure(error, NULL);
+ 
+@@ -1061,9 +1069,9 @@ static PHP_FUNCTION(libxml_use_internal_errors)
+    Retrieve last error from libxml */
+ static PHP_FUNCTION(libxml_get_last_error)
+ {
+-	xmlErrorPtr error;
++	ZEND_PARSE_PARAMETERS_NONE();
+ 
+-	error = xmlGetLastError();
++	const xmlError *error = xmlGetLastError();
+ 
+ 	if (error) {
+ 		object_init_ex(return_value, libxmlerror_class_entry);
+diff --git a/ext/libxml/php_libxml.h b/ext/libxml/php_libxml.h
+index cf936e95..9bbcbf67 100644
+--- a/ext/libxml/php_libxml.h
++++ b/ext/libxml/php_libxml.h
+@@ -37,6 +37,7 @@ extern zend_module_entry libxml_module_entry;
+ 
+ #include "zend_smart_str.h"
+ #include <libxml/tree.h>
++#include <libxml/parser.h>
+ 
+ #define LIBXML_SAVE_NOEMPTYTAG 1<<2
+ 
+diff --git a/ext/soap/php_sdl.c b/ext/soap/php_sdl.c
+index 26a23f57..e65d38e0 100644
+--- a/ext/soap/php_sdl.c
++++ b/ext/soap/php_sdl.c
+@@ -333,7 +333,8 @@ static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include)
+ 	sdl_restore_uri_credentials(ctx);
+ 
+ 	if (!wsdl) {
+-		xmlErrorPtr xmlErrorPtr = xmlGetLastError();
++
++		const xmlError *xmlErrorPtr = xmlGetLastError();
+ 
+ 		if (xmlErrorPtr) {
+ 			soap_error2(E_ERROR, "Parsing WSDL: Couldn't load from '%s' : %s", struri, xmlErrorPtr->message);
+diff --git a/main/streams/cast.c b/main/streams/cast.c
+index 2109239e..6e5c63fb 100644
+--- a/main/streams/cast.c
++++ b/main/streams/cast.c
+@@ -1,13 +1,11 @@
+ /*
+-   +----------------------------------------------------------------------+
+-   | PHP Version 7                                                        |
+    +----------------------------------------------------------------------+
+    | Copyright (c) The PHP Group                                          |
+    +----------------------------------------------------------------------+
+    | This source file is subject to version 3.01 of the PHP license,      |
+    | that is bundled with this package in the file LICENSE, and is        |
+    | available through the world-wide-web at the following url:           |
+-   | http://www.php.net/license/3_01.txt                                  |
++   | https://www.php.net/license/3_01.txt                                 |
+    | If you did not receive a copy of the PHP license and are unable to   |
+    | obtain it through the world-wide-web, please send a note to          |
+    | license@php.net so we can mail you a copy immediately.               |
+@@ -16,7 +14,9 @@
+    +----------------------------------------------------------------------+
+  */
+ 
+-#define _GNU_SOURCE
++#ifndef _GNU_SOURCE
++# define _GNU_SOURCE
++#endif
+ #include "php.h"
+ #include "php_globals.h"
+ #include "php_network.h"
+@@ -42,11 +42,18 @@ typedef struct {
+ 	int (*writer)(void *, const char *, int);
+ 	PHP_FPOS_T (*seeker)(void *, PHP_FPOS_T, int);
+ 	int (*closer)(void *);
+-} COOKIE_IO_FUNCTIONS_T;
++} cookie_io_functions_t;
+ 
+-FILE *fopencookie(void *cookie, const char *mode, COOKIE_IO_FUNCTIONS_T *funcs)
++FILE *fopencookie(void *cookie, const char *mode, cookie_io_functions_t *funcs)
+ {
+-	return funopen(cookie, funcs->reader, funcs->writer, funcs->seeker, funcs->closer);
++	FILE *file = funopen(cookie, funcs->reader, funcs->writer, funcs->seeker, funcs->closer);
++	if (file) {
++		/* Buffering of FILE handles is stateful.
++		 * A bailout during these can corrupt the state of the FILE handle
++		 * and cause memory corruption errors. See GH-11078. */
++		setvbuf(file, NULL, _IONBF, 0);
++	}
++	return file;
+ }
+ # define HAVE_FOPENCOOKIE 1
+ # define PHP_EMULATE_FOPENCOOKIE 1
+@@ -104,6 +111,9 @@ static ssize_t stream_cookie_writer(void *cookie, const char *buffer, size_t siz
+ 
+ # ifdef COOKIE_SEEKER_USES_OFF64_T
+ static int stream_cookie_seeker(void *cookie, off64_t *position, int whence)
++# else
++static int stream_cookie_seeker(void *cookie, off_t *position, int whence)
++# endif
+ {
+ 
+ 	*position = php_stream_seek((php_stream *)cookie, (zend_off_t)*position, whence);
+@@ -113,13 +123,6 @@ static int stream_cookie_seeker(void *cookie, off64_t *position, int whence)
+ 	}
+ 	return 0;
+ }
+-# else
+-static int stream_cookie_seeker(void *cookie, zend_off_t position, int whence)
+-{
+-
+-	return php_stream_seek((php_stream *)cookie, position, whence);
+-}
+-# endif
+ 
+ static int stream_cookie_closer(void *cookie)
+ {
+@@ -132,8 +135,8 @@ static int stream_cookie_closer(void *cookie)
+ }
+ #endif /* elif defined(HAVE_FOPENCOOKIE) */
+ 
+-#if HAVE_FOPENCOOKIE
+-static COOKIE_IO_FUNCTIONS_T stream_cookie_functions =
++#ifdef HAVE_FOPENCOOKIE
++static cookie_io_functions_t stream_cookie_functions =
+ {
+ 	stream_cookie_reader, stream_cookie_writer,
+ 	stream_cookie_seeker, stream_cookie_closer
+@@ -224,7 +227,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
+ 			goto exit_success;
+ 		}
+ 
+-#if HAVE_FOPENCOOKIE
++#ifdef HAVE_FOPENCOOKIE
+ 		/* if just checking, say yes we can be a FILE*, but don't actually create it yet */
+ 		if (ret == NULL) {
+ 			goto exit_success;
+@@ -296,7 +299,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
+ 
+ 	if (php_stream_is_filtered(stream)) {
+ 		if (show_err) {
+-			php_error_docref(NULL, E_WARNING, "cannot cast a filtered stream on this system");
++			php_error_docref(NULL, E_WARNING, "Cannot cast a filtered stream on this system");
+ 		}
+ 		return FAILURE;
+ 	} else if (stream->ops->cast && stream->ops->cast(stream, castas, ret) == SUCCESS) {
+@@ -312,7 +315,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
+ 			"select()able descriptor"
+ 		};
+ 
+-		php_error_docref(NULL, E_WARNING, "cannot represent a stream of type %s as a %s", stream->ops->label, cast_names[castas]);
++		php_error_docref(NULL, E_WARNING, "Cannot represent a stream of type %s as a %s", stream->ops->label, cast_names[castas]);
+ 	}
+ 
+ 	return FAILURE;

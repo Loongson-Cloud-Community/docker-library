@@ -1,0 +1,12 @@
+diff --git a/kong/meta.lua b/kong/meta.lua
+index f9d11a4..9df1737 100644
+--- a/kong/meta.lua
++++ b/kong/meta.lua
+@@ -20,6 +20,6 @@ return {
+   -- third-party dependencies' required version, as they would be specified
+   -- to lua-version's `set()` in the form {from, to}
+   _DEPENDENCIES = {
+-    nginx = { "1.19.3.1", "1.19.3.2" },
++    nginx = { "1.19.3.1", "1.25.3.1" },
+   }
+ }

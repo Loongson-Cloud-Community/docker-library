@@ -2,8 +2,8 @@
 
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=library
-REPOSITORY	?=busybox
-TAG		?=1.32.0
+REPOSITORY	?=node
+TAG		?=22
 LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)

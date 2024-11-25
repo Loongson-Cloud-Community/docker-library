@@ -1,0 +1,12 @@
+diff --git a/deps/v8/src/heap/cppgc/stats-collector.h b/deps/v8/src/heap/cppgc/stats-collector.h
+index 2cf7284..d8414ae 100644
+--- a/deps/v8/src/heap/cppgc/stats-collector.h
++++ b/deps/v8/src/heap/cppgc/stats-collector.h
+@@ -8,6 +8,7 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
++#include <algorithm>
+ #include <atomic>
+ #include <vector>
+ 

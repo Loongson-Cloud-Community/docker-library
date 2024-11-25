@@ -1,0 +1,67 @@
+From 6b6c9dd7368d7258582f9605c9c6a30a7de211a6 Mon Sep 17 00:00:00 2001
+From: wangweijie <wangweijie@loongson.cn>
+Date: Thu, 18 Jul 2024 11:37:50 +0800
+Subject: [PATCH] port to loong64
+
+---
+ images/kube-webhook-certgen/Makefile          | 13 ++++++-------
+ images/kube-webhook-certgen/rootfs/Dockerfile |  4 ++--
+ 2 files changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/images/kube-webhook-certgen/Makefile b/images/kube-webhook-certgen/Makefile
+index cd014c7c3..e4715bb2c 100644
+--- a/images/kube-webhook-certgen/Makefile
++++ b/images/kube-webhook-certgen/Makefile
+@@ -20,9 +20,9 @@ DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
+ INIT_BUILDX=$(DIR)/../../hack/init-buildx.sh
+ 
+ SHORT_SHA ?=$(shell git rev-parse --short HEAD)
+-TAG ?=v$(shell date +%Y%m%d)-$(SHORT_SHA)
++TAG ?=v20231011-$(SHORT_SHA)
+ 
+-REGISTRY ?= local
++REGISTRY ?= lcr.loongnix.cn/ingress-nginx
+ 
+ IMAGE = $(REGISTRY)/kube-webhook-certgen
+ 
+@@ -34,11 +34,10 @@ PLATFORMS?=linux/amd64,linux/arm,linux/arm64,linux/s390x
+ OUTPUT=
+ PROGRESS=plain
+ 
+-build: ensure-buildx
+-	docker buildx build \
+-		--platform=${PLATFORMS} $(OUTPUT) \
+-		--progress=$(PROGRESS) \
+-		--pull \
++build:
++	docker build \
++		--build-arg http_proxy=$(http_proxy) \
++		--build-arg https_proxy=$(https_proxy) \
+ 		-t $(IMAGE):$(TAG) rootfs
+ 
+ # push the cross built image
+diff --git a/images/kube-webhook-certgen/rootfs/Dockerfile b/images/kube-webhook-certgen/rootfs/Dockerfile
+index 846e37aee..04f0a4a9c 100644
+--- a/images/kube-webhook-certgen/rootfs/Dockerfile
++++ b/images/kube-webhook-certgen/rootfs/Dockerfile
+@@ -12,7 +12,7 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-FROM --platform=$BUILDPLATFORM golang:1.21.3 as builder
++FROM lcr.loongnix.cn/library/golang:1.21.5 as builder
+ ARG BUILDPLATFORM
+ ARG TARGETARCH
+ 
+@@ -20,7 +20,7 @@ WORKDIR /workspace
+ COPY . .
+ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -a -o kube-webhook-certgen main.go
+ 
+-FROM --platform=$BUILDPLATFORM gcr.io/distroless/static:nonroot
++FROM lcr.loongnix.cn/library/alpine:3.19
+ ARG BUILDPLATFORM
+ ARG TARGETARCH
+ WORKDIR /
+-- 
+2.38.1
+

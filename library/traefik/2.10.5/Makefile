@@ -2,8 +2,8 @@
 
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=library
-REPOSITORY	?=busybox
-TAG		?=1.32.0
+REPOSITORY	?=traefik
+TAG		?=2.10.5
 LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
@@ -13,6 +13,7 @@ default: image
 
 image:
 	docker build \
+                --network=host \
 		--build-arg http_proxy=$(http_proxy) \
 		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE) \

@@ -2,8 +2,8 @@
 
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=library
-REPOSITORY	?=busybox
-TAG		?=1.32.0
+REPOSITORY	?=postgres
+TAG		?=16-sid
 LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)

@@ -1,0 +1,107 @@
+From df4be670f73e12bf5f808aca8ce901fcbf5dc1ca Mon Sep 17 00:00:00 2001
+From: wangweijie <wangweijie@loongson.cn>
+Date: Fri, 19 Jul 2024 14:54:03 +0800
+Subject: [PATCH] port to loong64
+
+---
+ Dockerfile | 15 ++++++++-------
+ Makefile   |  9 +++++----
+ 2 files changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 2c92046..45ed122 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,9 +1,8 @@
+-#syntax=docker/dockerfile:1.2
+ ARG GIT_COMMIT=unknown
+ ARG GIT_TAG=unknown
+ ARG GIT_TREE_STATE=unknown
+ 
+-FROM golang:1.20-alpine3.16 as builder
++FROM lcr.loongnix.cn/library/golang:1.20-alpine as builder
+ 
+ RUN apk update && apk add --no-cache \
+     git \
+@@ -24,9 +23,11 @@ COPY . .
+ 
+ ####################################################################################################
+ 
+-FROM node:16-alpine as argo-ui
++FROM lcr.loongnix.cn/library/node:16.20.2 as argo-ui
+ 
+-RUN apk update && apk add --no-cache git
++ENV DEBIAN_FRONTEND=noninteractive
++
++RUN apt update && apt install -y git
+ 
+ COPY ui/package.json ui/yarn.lock ui/
+ 
+@@ -76,7 +77,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
+ 
+ ####################################################################################################
+ 
+-FROM gcr.io/distroless/static as argoexec
++FROM lcr.loongnix.cn/library/alpine:3.19 as argoexec
+ 
+ COPY --from=argoexec-build /go/src/github.com/argoproj/argo-workflows/dist/argoexec /bin/
+ COPY --from=argoexec-build /etc/mime.types /etc/mime.types
+@@ -87,7 +88,7 @@ ENTRYPOINT [ "argoexec" ]
+ 
+ ####################################################################################################
+ 
+-FROM gcr.io/distroless/static as workflow-controller
++FROM lcr.loongnix.cn/library/alpine:3.19 as workflow-controller
+ 
+ USER 8737
+ 
+@@ -99,7 +100,7 @@ ENTRYPOINT [ "workflow-controller" ]
+ 
+ ####################################################################################################
+ 
+-FROM gcr.io/distroless/static as argocli
++FROM lcr.loongnix.cn/library/alpine:3.19 as argocli
+ 
+ USER 8737
+ 
+diff --git a/Makefile b/Makefile
+index b583fa8..7aaa195 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,14 +12,14 @@ GIT_REMOTE            := origin
+ GIT_BRANCH            := $(shell git rev-parse --symbolic-full-name --verify --quiet --abbrev-ref HEAD)
+ # copied verbatim to release.yaml
+ GIT_TAG               := $(shell git describe --exact-match --tags --abbrev=0  2> /dev/null || echo untagged)
+-GIT_TREE_STATE        := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean" ; else echo "dirty"; fi)
++GIT_TREE_STATE        := clean
+ RELEASE_TAG           := $(shell if [[ "$(GIT_TAG)" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$$ ]]; then echo "true"; else echo "false"; fi)
+ DEV_BRANCH            := $(shell [ "$(GIT_BRANCH)" = master ] || [ `echo $(GIT_BRANCH) | cut -c -8` = release- ] || [ `echo $(GIT_BRANCH) | cut -c -4` = dev- ] || [ $(RELEASE_TAG) = true ] && echo false || echo true)
+ SRC                   := $(GOPATH)/src/github.com/argoproj/argo-workflows
+ 
+ 
+ # docker image publishing options
+-IMAGE_NAMESPACE       ?= quay.io/argoproj
++IMAGE_NAMESPACE       ?= lcr.loongnix.cn/argoproj
+ DEV_IMAGE             ?= $(shell [ `uname -s` = Darwin ] && echo true || echo false)
+ 
+ # declares which cluster to import to in case it's not the default name
+@@ -234,13 +234,14 @@ argoexec-image:
+ 
+ %-image:
+ 	[ ! -e dist/$* ] || mv dist/$* .
+-	docker buildx build \
++	docker build \
+ 		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+ 		--build-arg GIT_TAG=$(GIT_TAG) \
+ 		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
++		--build-arg http_proxy=$(http_proxy) \
++		--build-arg https_proxy=$(https_proxy) \
+ 		-t $(IMAGE_NAMESPACE)/$*:$(VERSION) \
+ 		--target $* \
+-		--load \
+ 		 .
+ 	[ ! -e $* ] || mv $* dist/
+ 	docker run --rm -t $(IMAGE_NAMESPACE)/$*:$(VERSION) version
+-- 
+2.38.1
+

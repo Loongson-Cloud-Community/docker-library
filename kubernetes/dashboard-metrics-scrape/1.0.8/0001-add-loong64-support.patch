@@ -1,0 +1,71 @@
+diff --git a/Dockerfile b/Dockerfile
+index 41cf8dd..2020b9c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -2,10 +2,11 @@
+ ARG GO_VERSION=1.18
+ 
+ # First stage: build the executable.
+-FROM golang:${GO_VERSION}-stretch AS builder
++#FROM golang:${GO_VERSION}-stretch AS builder
++FROM lcr.loongnix.cn/library/golang:1.19 AS builder
+ 
+ # What arch is it?
+-ARG GOARCH=amd64
++ARG GOARCH=loong64
+ ARG GOOS=linux
+ 
+ # Install the Certificate-Authority certificates for the app to be able to make
+@@ -19,6 +20,8 @@ WORKDIR /src
+ # Import the code from the context.
+ COPY ./ ./
+ 
++ENV GOPROXY=https://goproxy.cn
++
+ # Build the executable to `/app`. Mark the build as statically linked.
+ RUN echo "Building for $GOARCH" \
+     && mkdir -p ${GOPATH}/src/github.com/kubernetes-sigs \
+diff --git a/hack/deploy.sh b/hack/deploy.sh
+index c09d497..b177061 100755
+--- a/hack/deploy.sh
++++ b/hack/deploy.sh
+@@ -1,6 +1,6 @@
+ #!/bin/bash
+ 
+-arch_list="amd64 arm arm64 ppc64le s390x"
++arch_list="loong64"
+ manifest="kubernetesui/metrics-scraper";
+ manifest_list="";
+ 
+@@ -8,10 +8,10 @@ manifest_list="";
+ for i in ${arch_list}; do
+     # If it's a tagged release, use the tag
+     # Otherwise, assume it's HEAD and push to latest
+-    container="${manifest}-${i}:${TRAVIS_TAG:="latest"}"
++    container="lcr.loongnix.cn/${manifest}:1.0.8"
+ 
+-    echo "--- docker build --no-cache --build-arg GOARCH=${i} -t ${container} .";
+-    docker build --no-cache --build-arg GOARCH=${i} -t ${container} .
++    echo "--- docker build --no-cache --build-arg http_proxy=http://10.2.10.197:7890 --build-arg GOARCH=${i} -t ${container} .";
++    docker build  --build-arg GOARCH=${i} -t ${container} .
+ 
+     echo "--- docker push ${container}"
+     docker push ${container}
+@@ -20,14 +20,14 @@ for i in ${arch_list}; do
+ done;
+ 
+ echo "--- docker manifest create --amend ${manifest}:${TRAVIS_TAG:="latest"} ${manifest_list}"
+-docker manifest create --amend ${manifest}:${TRAVIS_TAG:="latest"} ${manifest_list}
++#docker manifest create --amend ${manifest}:${TRAVIS_TAG:="latest"} ${manifest_list}
+ 
+ for i in ${arch_list}; do
+     container="${manifest}-${i}:${TRAVIS_TAG:="latest"}"
+ 
+     echo "--- docker manifest annotate ${manifest}:${TRAVIS_TAG:="latest"} ${container} --os linux --arch ${i}"
+-    docker manifest annotate ${manifest}:${TRAVIS_TAG:="latest"} ${container} --os linux --arch ${i}
++#    docker manifest annotate ${manifest}:${TRAVIS_TAG:="latest"} ${container} --os linux --arch ${i}
+ done;
+ 
+ echo "--- docker manifest push ${manifest}:${TRAVIS_TAG:="latest"}"
+-docker manifest push ${manifest}:${TRAVIS_TAG:="latest"}
++#docker manifest push ${manifest}:${TRAVIS_TAG:="latest"}

@@ -2,8 +2,8 @@
 
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=library
-REPOSITORY	?=busybox
-TAG		?=1.32.0
+REPOSITORY	?=fedora
+TAG		?=39
 LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
@@ -11,7 +11,9 @@ LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
 
 default: image
 
-image:
+rootfs:
+	bash mkimage-rootfs.sh
+image: rootfs
 	docker build \
 		--build-arg http_proxy=$(http_proxy) \
 		--build-arg https_proxy=$(https_proxy) \
