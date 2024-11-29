@@ -1,0 +1,82 @@
+diff --git a/Dockerfile b/Dockerfile
+index b647c0c..813797c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,6 @@
+ # Build stage
+-FROM docker.io/library/golang:1.22-alpine3.19 AS build-env
++#FROM docker.io/library/golang:1.22-alpine3.19 AS build-env
++FROM lcr.loongnix.cn/library/golang:1.22-alpine AS build-env
+ 
+ ARG GOPROXY
+ ENV GOPROXY ${GOPROXY:-direct}
+@@ -21,6 +22,11 @@ RUN apk --no-cache add \
+ COPY . ${GOPATH}/src/code.gitea.io/gitea
+ WORKDIR ${GOPATH}/src/code.gitea.io/gitea
+ 
++ENV https_proxy=${https_proxy}
++
++RUN npm config set registry https://registry.npmjs.org/ && npm config set fetch-retry-maxtimeout 120000 && \
++	npm config set fetch-timeout 120000
++
+ # Checkout version if set
+ RUN if [ -n "${GITEA_VERSION}" ]; then git checkout "${GITEA_VERSION}"; fi \
+  && make clean-all build
+@@ -41,12 +47,12 @@ RUN chmod 755 /tmp/local/usr/bin/entrypoint \
+               /go/src/code.gitea.io/gitea/environment-to-ini
+ RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
+ 
+-FROM docker.io/library/alpine:3.19
++FROM lcr.loongnix.cn/library/alpine:3.19
+ LABEL maintainer="maintainers@gitea.io"
+ 
+ EXPOSE 22 3000
+ 
+-RUN apk --no-cache add \
++RUN apk update && apk --no-cache add \
+     bash \
+     ca-certificates \
+     curl \
+@@ -78,7 +84,7 @@ ENV GITEA_CUSTOM /data/gitea
+ VOLUME ["/data"]
+ 
+ ENTRYPOINT ["/usr/bin/entrypoint"]
+-CMD ["/bin/s6-svscan", "/etc/s6"]
++CMD ["/usr/bin/s6-svscan", "/etc/s6"]
+ 
+ COPY --from=build-env /tmp/local /
+ COPY --from=build-env /go/src/code.gitea.io/gitea/gitea /app/gitea/gitea
+diff --git a/Dockerfile.rootless b/Dockerfile.rootless
+index dd7da97..c20a4de 100644
+--- a/Dockerfile.rootless
++++ b/Dockerfile.rootless
+@@ -1,5 +1,6 @@
+ # Build stage
+-FROM docker.io/library/golang:1.22-alpine3.19 AS build-env
++#FROM docker.io/library/golang:1.22-alpine3.19 AS build-env
++FROM lcr.loongnix.cn/library/golang:1.22-alpine AS build-env
+ 
+ ARG GOPROXY
+ ENV GOPROXY ${GOPROXY:-direct}
+diff --git a/Makefile b/Makefile
+index 0cd6abb..eafe380 100644
+--- a/Makefile
++++ b/Makefile
+@@ -37,7 +37,7 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1
+ GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1
+ ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1
+ 
+-DOCKER_IMAGE ?= gitea/gitea
++DOCKER_IMAGE ?= lcr.loongnix.cn/gitea/gitea
+ DOCKER_TAG ?= latest
+ DOCKER_REF := $(DOCKER_IMAGE):$(DOCKER_TAG)
+ 
+@@ -972,7 +972,7 @@ generate-manpage:
+ 
+ .PHONY: docker
+ docker:
+-	docker build --disable-content-trust=false -t $(DOCKER_REF) .
++	docker build --build-arg GOPROXY=https://goproxy.cn --build-arg https_proxy=$(https_proxy) --build-arg http_proxy=$(http_proxy) -t $(DOCKER_REF) .
+ # support also build args docker build --build-arg GITEA_VERSION=v1.2.3 --build-arg TAGS="bindata sqlite sqlite_unlock_notify"  .
+ 
+ # This endif closes the if at the top of the file
