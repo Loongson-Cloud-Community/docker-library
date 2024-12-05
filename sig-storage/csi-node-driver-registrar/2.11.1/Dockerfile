@@ -5,7 +5,7 @@ RUN wget -q -O /csi-node-driver-registrar https://github.com/Loongson-Cloud-Comm
 RUN chmod +x /csi-node-driver-registrar && /csi-node-driver-registrar -version
 
 
-FROM lcr.loongnix.cn/library/debian:sid
+FROM lcr.loongnix.cn/distroless/static-debian10:latest
 LABEL maintainers="Kubernetes Authors"
 LABEL description="CSI External Attacher"
 COPY --from=downloader /csi-node-driver-registrar /csi-node-driver-registrar
