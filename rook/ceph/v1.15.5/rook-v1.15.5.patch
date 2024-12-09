@@ -1,0 +1,113 @@
+diff --git a/Makefile b/Makefile
+index 29d1c24..a829581 100644
+--- a/Makefile
++++ b/Makefile
+@@ -69,7 +69,7 @@ endif
+ # platforms
+ PLATFORMS ?= $(ALL_PLATFORMS)
+ # PLATFORMS_TO_BUILD_FOR controls for which platforms to build the rook binary for
+-PLATFORMS_TO_BUILD_FOR ?= linux_amd64 linux_arm64
++PLATFORMS_TO_BUILD_FOR ?= linux_amd64 linux_arm64 linux_loong64
+ SERVER_PLATFORMS := $(filter linux_%,$(PLATFORMS))
+ CLIENT_PLATFORMS := $(filter-out linux_%,$(PLATFORMS))
+ 
+diff --git a/build/makelib/common.mk b/build/makelib/common.mk
+index d612422..003458e 100644
+--- a/build/makelib/common.mk
++++ b/build/makelib/common.mk
+@@ -45,7 +45,7 @@ GOARCH := $(word 2, $(subst _, ,$(PLATFORM)))
+ export GOOS GOARCH
+ endif
+ 
+-ALL_PLATFORMS ?= darwin_amd64 darwin_arm64 windows_amd64 linux_amd64 linux_arm64
++ALL_PLATFORMS ?= darwin_amd64 darwin_arm64 windows_amd64 linux_amd64 linux_arm64 linux_loong64
+ 
+ export GOARM
+ 
+diff --git a/go.sum b/go.sum
+index c61602a..c9466fc 100644
+--- a/go.sum
++++ b/go.sum
+@@ -763,7 +763,7 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
+ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+ github.com/portworx/dcos-secrets v0.0.0-20180616013705-8e8ec3f66611/go.mod h1:4hklRW/4DQpLqkcXcjtNprbH2tz/sJaNtqinfPWl/LA=
+ github.com/portworx/kvdb v0.0.0-20200929023115-b312c7519467/go.mod h1:Q8YyrNDvPp3DVF96BDcQuaC7fAYUCuUX+l58S7OnD2M=
+-github.com/portworx/sched-ops v0.20.4-openstorage-rc3 h1:tXnHsjZT2wZ2BCXf8avDoya7zGyCgLNUC8Upt+WEQrY=
++github.com/portworx/sched-ops v0.20.4-openstorage-rc3 h1:46EZ+vYCJ3qmQolvgDCrGuPz8Tf0vIds41RuF0dqVEw=
+ github.com/portworx/sched-ops v0.20.4-openstorage-rc3/go.mod h1:DpRDDqXWQrReFJ5SHWWrURuZdzVKjrh2OxbAfwnrAyk=
+ github.com/portworx/talisman v0.0.0-20191007232806-837747f38224/go.mod h1:OjpMH9Uh5o9ntVGktm4FbjLNwubJ3ITih2OfYrAeWtA=
+ github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
+diff --git a/images/Makefile b/images/Makefile
+index c4ce52e..cb0f7f2 100644
+--- a/images/Makefile
++++ b/images/Makefile
+@@ -14,7 +14,7 @@
+ 
+ include image.mk
+ 
+-PLATFORMS ?= linux_amd64 linux_arm64
++PLATFORMS ?= linux_amd64 linux_arm64 linux_loong64
+ 
+ # tini's version
+ export TINI_VERSION = v0.19.0
+diff --git a/images/ceph/Dockerfile b/images/ceph/Dockerfile
+index 537fe2d..4c5b7f6 100644
+--- a/images/ceph/Dockerfile
++++ b/images/ceph/Dockerfile
+@@ -21,11 +21,11 @@ ARG S5CMD_ARCH
+ 
+ # 'ip' tool must be installed for Multus.
+ # Doing a 'dnf install' sometimes breaks CI when centos repos go down or have other package build errors.
+-RUN dnf install -y --repo baseos --setopt=install_weak_deps=False iproute && dnf clean all
++RUN dnf install -y --setopt=install_weak_deps=False iproute && dnf clean all
+ 
+ 
+ # Install the s5cmd package to interact with s3 gateway
+-RUN curl --fail -sSL -o /s5cmd.tar.gz https://github.com/peak/s5cmd/releases/download/v${S5CMD_VERSION}/s5cmd_${S5CMD_VERSION}_${S5CMD_ARCH}.tar.gz && \
++RUN curl --fail -sSL -o /s5cmd.tar.gz https://github.com/Loongson-Cloud-Community/s5cmd/releases/download/v2.2.1/s5cmd_2.2.1_loong64_abi2.0.tar.gz && \
+     mkdir /s5cmd && \
+     tar xf /s5cmd.tar.gz -C /s5cmd && \
+     install /s5cmd/s5cmd /usr/local/bin/s5cmd && \
+diff --git a/images/ceph/Makefile b/images/ceph/Makefile
+index afed33d..86b8110 100755
+--- a/images/ceph/Makefile
++++ b/images/ceph/Makefile
+@@ -23,7 +23,8 @@ else
+ CEPH_VERSION ?= v18.2.4-20240724
+ endif
+ REGISTRY_NAME = quay.io
+-BASEIMAGE = $(REGISTRY_NAME)/ceph/ceph-$(GOARCH):$(CEPH_VERSION)
++# BASEIMAGE = $(REGISTRY_NAME)/ceph/ceph-$(GOARCH):$(CEPH_VERSION)
++BASEIMAGE := lcr.loongnix.cn/ceph/ceph:18.2.2
+ CEPH_IMAGE = $(BUILD_REGISTRY)/ceph-$(GOARCH)
+ OPERATOR_SDK_VERSION = v1.25.0
+ # TODO: update to yq v4 - v3 end of life in Aug 2021 ; v4 removes the 'yq delete' cmd and changes syntax
+@@ -61,11 +62,13 @@ do.build:
+ 	@mkdir -p $(BUILD_CONTEXT_DIR)/rook-external/test-data
+ 	@cp $(MANIFESTS_DIR)/create-external-cluster-resources.* $(BUILD_CONTEXT_DIR)/rook-external/
+ 	@cd $(BUILD_CONTEXT_DIR) && $(SED_IN_PLACE) 's|BASEIMAGE|$(BASEIMAGE)|g' Dockerfile
+-	@if [ -z "$(BUILD_CONTAINER_IMAGE)" ]; then\
++	if [ -z "$(BUILD_CONTAINER_IMAGE)" ]; then\
+ 		$(DOCKERCMD) build $(BUILD_ARGS) \
+ 		--build-arg S5CMD_VERSION=$(S5CMD_VERSION) \
+ 		--build-arg S5CMD_ARCH=$(S5CMD_ARCH) \
+-		-t $(CEPH_IMAGE) \
++		--build-arg http_proxy=$(http_proxy) \
++		--build-arg https_proxy=$(https_proxy) \
++		-t lcr.loongnix.cn/rook/ceph:v1.15.5 \
+ 		$(BUILD_CONTEXT_DIR);\
+ 	fi
+ 	@if [ -z "$(SAVE_BUILD_CONTEXT_DIR)" ]; then\
+diff --git a/images/image.mk b/images/image.mk
+index 2aee0c4..51afd53 100644
+--- a/images/image.mk
++++ b/images/image.mk
+@@ -28,6 +28,8 @@ ifeq ($(GOARCH),amd64)
+ PLATFORM_ARCH = x86_64
+ else ifeq ($(GOARCH),arm64)
+ PLATFORM_ARCH = aarch64
++else ifeq ($(GOARCH),loong64)
++PLATFORM_ARCH = loongarch64
+ else
+ $(error Unknown go architecture $(GOARCH))
+ endif
