@@ -1,6 +1,6 @@
 FROM lcr.loongnix.cn/library/debian:sid as downloader
 RUN apt update -y && apt install wget -y
-RUN wget -q -O /csi-snapshotter https://github.com/Loongson-Cloud-Community/external-snapshotter/releases/download/v8.0.1/csi-snapshotter-v8.0.1-abi2.0
+RUN wget -q -O /csi-snapshotter https://github.com/Loongson-Cloud-Community/external-snapshotter/releases/download/v6.3.4/csi-snapshotter-v6.3.4-abi2.0
 # 冒烟
 RUN chmod +x /csi-snapshotter && /csi-snapshotter -version
 FROM lcr.loongnix.cn/distroless/static-debian10:latest
