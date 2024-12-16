@@ -1,10 +1,12 @@
-FROM lcr.loongnix.cn/kubevirt/centos_base:1.52.0
+FROM lcr.loongnix.cn/library/debian:sid
 
 LABEL maintainer="wangweijie@loongson.cn"
 
 RUN groupadd nonroot-user -g 1001 &&\
-	useradd nonroot-user -u 1001 -g 1001 &&\
+	useradd -m nonroot-user -u 1001 -g 1001 &&\
 	usermod -s /bin/bash nonroot-user
+
+ENV architecture=loong64
 
 USER 1001
 
