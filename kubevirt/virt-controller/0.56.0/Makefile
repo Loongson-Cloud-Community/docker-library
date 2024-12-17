@@ -3,20 +3,22 @@
 REGISTRY?=lcr.loongnix.cn
 ORGANIZATION?=kubevirt
 REPOSITORY?=virt-controller
-TAG?=0.58.0
-LATEST?=false
+TAG?=0.56.0
+LATEST?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
-DOWNLOAD_URL=http://cloud.loongnix.xa/releases/loongarch64/kubevirt/virt-controller/0.58.0/virt-controller
+DOWNLOAD_URL=http://cloud.loongnix.xa/releases/loongarch64/kubevirt/virt-controller/0.50.0/virt-controller
 default: image
 
 download:
-	no_proxy=cloud.loongnix.cn wget -O virt-controller $(DOWNLOAD_URL)
+	wget -O virt-controller $(DOWNLOAD_URL)
 	chmod +x virt-controller
 
 image: download
 	docker build \
+		--build-arg http_proxy=$(http_proxy) \
+		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE) \
 		.
 
