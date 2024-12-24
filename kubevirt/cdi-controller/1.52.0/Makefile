@@ -12,7 +12,7 @@ LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
 default: image
 
 download:
-	wget http://cloud.loongnix.xa/releases/loongarch64/kubevirt/cdi-controller/1.52.0/cdi-controller
+	wget http://cloud.loongnix.cn/releases/loongarch64/kubevirt/cdi-controller/1.52.0/cdi-controller
 	chmod +x cdi-controller
 
 image: download

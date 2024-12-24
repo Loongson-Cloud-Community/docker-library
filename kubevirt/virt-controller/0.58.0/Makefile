@@ -8,7 +8,7 @@ LATEST?=false
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
-DOWNLOAD_URL=http://cloud.loongnix.xa/releases/loongarch64/kubevirt/virt-controller/0.58.0/virt-controller
+DOWNLOAD_URL=http://cloud.loongnix.cn/releases/loongarch64/kubevirt/virt-controller/0.58.0/virt-controller
 default: image
 
 download:

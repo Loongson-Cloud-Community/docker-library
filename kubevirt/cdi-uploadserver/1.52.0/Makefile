@@ -12,7 +12,7 @@ LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
 default: image
 
 download: clean
-	unset http_proxy && wget http://cloud.loongnix.xa/releases/loongarch64/kubevirt/cdi-uploadserver/1.52.0/cdi-uploadserver
+	unset http_proxy && wget http://cloud.loongnix.cn/releases/loongarch64/kubevirt/cdi-uploadserver/1.52.0/cdi-uploadserver
 	chmod +x cdi-uploadserver
 
 image: download

@@ -11,7 +11,7 @@ IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 default: image
 
 download:
-	wget "http://cloud.loongnix.xa/releases/loongarch64/kubevirt/virt-controller/0.50.0/virt-controller"
+	wget "http://cloud.loongnix.cn/releases/loongarch64/kubevirt/virt-controller/0.50.0/virt-controller"
 	chmod +x virt-controller
 
 image: download
