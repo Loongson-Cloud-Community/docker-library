@@ -1,6 +1,6 @@
-FROM lcr.loongnix.cn/openeuler/openeuler:22.03-LTS
+FROM lcr.loongnix.cn/kubevirt/centos_base:1.52.0
 
-LABEL maintainer="zhaixiaojuan@loongson.cn"
+LABEL maintainer="wangweijie@loongson.cn"
 
 RUN groupadd nonroot-user -g 1001 &&\
 	useradd nonroot-user -u 1001 -g 1001 &&\

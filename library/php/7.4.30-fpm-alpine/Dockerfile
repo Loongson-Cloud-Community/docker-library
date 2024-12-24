@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM lcr.loongnix.cn/library/alpine:3.19
+FROM lcr.loongnix.cn/library/alpine:3.21
 MAINTAINER Xuhui Qiang <qiangxuhui@loongson.cn>
 
 # dependencies required for running "phpize"
@@ -27,8 +27,9 @@ RUN apk add --no-cache \
 		tar \
 		xz \
 		patch \
+		wget 
 # https://github.com/docker-library/php/issues/494
-		openssl
+#		openssl
 
 # ensure www-data user exists
 RUN set -eux; \
@@ -37,6 +38,21 @@ RUN set -eux; \
 # https://git.alpinelinux.org/aports/tree/main/apache2/apache2.pre-install?h=3.14-stable
 # https://git.alpinelinux.org/aports/tree/main/lighttpd/lighttpd.pre-install?h=3.14-stable
 # https://git.alpinelinux.org/aports/tree/main/nginx/nginx.pre-install?h=3.14-stable
+
+# 编译openssl1.x
+RUN apk add --no-cache --virtual .build-deps build-base \
+    perl \
+    bash \
+    zlib-dev \
+    make \
+    gcc \
+    linux-headers && rm -rf /var/cache/apk/* && \
+    mkdir -p /openssl && cd /openssl && wget https://www.openssl.org/source/openssl-1.1.1u.tar.gz && \
+	tar -zxvf openssl-1.1.1u.tar.gz && \
+	cd openssl-1.1.1u && \
+	./config && make && make install && \
+	 rm -rf /openssl && apk del .build-deps && \
+	 rm -rf /var/cache/apk/*
 
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN set -eux; \
@@ -70,7 +86,7 @@ RUN set -eux; \
 	mkdir -p /usr/src; \
 	cd /usr/src; \
 	\
-	curl -fsSL -o php.tar.xz "$PHP_URL"; \
+	wget -O php.tar.xz "$PHP_URL"; \
 	\
 	if [ -n "$PHP_SHA256" ]; then \
 		echo "$PHP_SHA256 *php.tar.xz" | sha256sum -c -; \
@@ -104,9 +120,9 @@ RUN set -eux; \
 		libxml2-dev \
 		linux-headers \
 		oniguruma-dev \
-		openssl-dev \
 		readline-dev \
 		sqlite-dev \
+		php-pear \
 	; \
 	\
 # make sure musl's iconv doesn't get used (https://www.php.net/manual/en/intro.iconv.php)
@@ -130,6 +146,7 @@ RUN set -eux; \
 		\
 # make sure invalid --configure-flags are fatal errors instead of just warnings
 		--enable-option-checking=fatal \
+		--with-openssl \
 		\
 # https://github.com/docker-library/php/issues/439
 		--with-mhash \
@@ -202,9 +219,9 @@ RUN set -eux; \
 	apk del --no-network .build-deps; \
 	\
 # update pecl channel definitions https://github.com/docker-library/php/issues/443
-	pecl update-channels; \
-	rm -rf /tmp/pear ~/.pearrc; \
-	\
+#	pecl update-channels; \
+#	rm -rf /tmp/pear ~/.pearrc; \
+#	\
 # smoke test
 	php --version
 
