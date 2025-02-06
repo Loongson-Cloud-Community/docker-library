@@ -1,0 +1,52 @@
+From 8a95e616b91ac0eeedba90a61e36e652919763f2 Mon Sep 17 00:00:00 2001
+From: Niels Dossche <7771979+nielsdos@users.noreply.github.com>
+Date: Fri, 17 Nov 2023 19:45:40 +0100
+Subject: [PATCH] Fix GH-12702: libxml2 2.12.0 issue building from src
+
+Fixes GH-12702.
+
+Co-authored-by: nono303 <github@nono303.net>
+---
+ NEWS                    | 3 +++
+ ext/dom/document.c      | 1 +
+ ext/libxml/php_libxml.h | 1 +
+ 3 files changed, 5 insertions(+)
+
+diff --git a/NEWS b/NEWS
+index dff47b02fb671..247a124e51293 100644
+--- a/NEWS
++++ b/NEWS
+@@ -5,6 +5,9 @@ PHP                                                                        NEWS
+ - Intl:
+   . Fixed bug GH-12635 (Test bug69398.phpt fails with ICU 74.1). (nielsdos)
+ 
++- LibXML:
++  . Fixed bug GH-12702 (libxml2 2.12.0 issue building from src). (nono303)
++
+ - PCRE:
+   . Fixed bug GH-12628 (The gh11374 test fails on Alpinelinux). (nielsdos)
+ 
+diff --git a/ext/dom/document.c b/ext/dom/document.c
+index 59f00897a69aa..8312d6c59399f 100644
+--- a/ext/dom/document.c
++++ b/ext/dom/document.c
+@@ -23,6 +23,7 @@
+ #if defined(HAVE_LIBXML) && defined(HAVE_DOM)
+ #include "php_dom.h"
+ #include <libxml/SAX.h>
++#include <libxml/xmlsave.h>
+ #ifdef LIBXML_SCHEMAS_ENABLED
+ #include <libxml/relaxng.h>
+ #include <libxml/xmlschemas.h>
+diff --git a/ext/libxml/php_libxml.h b/ext/libxml/php_libxml.h
+index af1cc7d6ac8c5..b484568bb1b0a 100644
+--- a/ext/libxml/php_libxml.h
++++ b/ext/libxml/php_libxml.h
+@@ -35,6 +35,7 @@ extern zend_module_entry libxml_module_entry;
+ 
+ #include "zend_smart_str.h"
+ #include <libxml/tree.h>
++#include <libxml/parser.h>
+ 
+ #define LIBXML_SAVE_NOEMPTYTAG 1<<2
+ 
