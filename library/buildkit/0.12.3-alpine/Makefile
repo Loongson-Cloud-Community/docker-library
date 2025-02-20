@@ -19,5 +19,7 @@ image: src
 	cd src && make image
 push: src
 	cd src && make push
+	docker tag $(IMAGE) $(LATEST_IMAGE)
+	docker push $(LATEST_IMAGE)
 clean:
 	rm -rf src
