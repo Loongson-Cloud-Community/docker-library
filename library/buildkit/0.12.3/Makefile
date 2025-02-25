@@ -3,7 +3,7 @@
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=library
 REPOSITORY	?=buildkit
-TAG		?=0.12.3
+TAG		?=0.12.3-debian
 LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
@@ -16,10 +16,10 @@ src:
 	git clone -b loong64-0.12.3 $(GIT_URL) $@
 
 image: src
-	cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3 -f Dockerfile .
+	cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3-debian -f Dockerfile .
 	#cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3 -f Dockerfile.static .
 push:
-	cd src/ && docker buildx build --load -t lcr.loongnix.cn/library/buildkit:0.12.3 -f Dockerfile . && docker push lcr.loongnix.cn/library/buildkit:0.12.3
+	cd src/ && docker buildx build --load -t lcr.loongnix.cn/library/buildkit:0.12.3-debian -f Dockerfile . && docker push lcr.loongnix.cn/library/buildkit:0.12.3-debian
 	#cd src/ && docker buildx build --load -t lcr.loongnix.cn/library/buildkit:0.12.3 -f Dockerfile.static . && docker push lcr.loongnix.cn/library/buildkit:0.12.3
 
 clean:

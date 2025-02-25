@@ -13,10 +13,10 @@ GIT_URL=https://github.com/Loongson-Cloud-Community/xx.git
 default: image
 
 src:
-	git clone -b loong64-1.3.0 $(GIT_URL) $@
+	git clone -b loong64-1.3.0-new $(GIT_URL) $@
 
 image: src
-	cd src/src/ && docker buildx bake -f docker-bake.dev.hcl
+	cd src/ && docker buildx bake -f docker-bake.hcl --load
 
 push:
 	docker push $(IMAGE)
