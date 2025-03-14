@@ -3,7 +3,7 @@
 REGISTRY	?=lcr.loongnix.cn
 ORGANIZATION	?=weaviate
 REPOSITORY	?=weaviate
-TAG		?=1.19.0
+TAG		?=v1.19.0
 LATEST		?=false
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
