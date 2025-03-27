@@ -1,4 +1,4 @@
-FROM lcr.loongnix.cn/library/debian:sid
+FROM lcr.loongnix.cn/library/python:3.11
 
 RUN groupadd --gid 1000 node \
   && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
@@ -48,15 +48,8 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
       grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c -; \
       rm SHASUMS256.txt.asc SHASUMS256.txt; \
     fi \
-#    && apt-mark auto '.*' > /dev/null \
-    && find /usr/local -type f -executable -exec ldd '{}' ';' \
-      | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
-      | sort -u \
-      | xargs -r dpkg-query --search \
-      | cut -d: -f1 \
-      | sort -u \
-      | xargs -r apt-mark manual \
-#    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false debian-ports-archive-keyring\
+    && apt-mark auto '.*' > /dev/null \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false debian-ports-archive-keyring\
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
     # smoke tests
     && node --version \
@@ -84,18 +77,10 @@ RUN set -ex \
   && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
   && apt-mark auto '.*' > /dev/null \
   && { [ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; } \
-  && find /usr/local -type f -executable -exec ldd '{}' ';' \
-    | awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
-    | sort -u \
-    | xargs -r dpkg-query --search \
-    | cut -d: -f1 \
-    | sort -u \
-    | xargs -r apt-mark manual \
-  #&& apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false debian-ports-archive-keyring\
   # smoke test
   && yarn --version
 
 COPY docker-entrypoint.sh /usr/local/bin/
 #ENTRYPOINT ["docker-entrypoint.sh"]
 
-#CMD [ "node" ]
+CMD [ "node" ]
