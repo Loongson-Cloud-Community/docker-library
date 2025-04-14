@@ -1,0 +1,33 @@
+diff --git a/docker/local.dockerfile b/docker/local.dockerfile
+index 675543a..67463ce 100644
+--- a/docker/local.dockerfile
++++ b/docker/local.dockerfile
+@@ -1,6 +1,8 @@
+-FROM golang:1.22-alpine as builder
++FROM lcr.loongnix.cn/library/debian:sid as builder
+ 
+-ARG VERSION=unknown
++RUN apt update && apt install -y golang ca-certificates
++
++ARG VERSION=0.0.3
+ 
+ # copy project
+ COPY . /app
+@@ -9,7 +11,7 @@ COPY . /app
+ WORKDIR /app
+ 
+ # using goproxy if you have network issues
+-# ENV GOPROXY=https://goproxy.cn,direct
++RUN GO111MODULE=on GOPROXY=https://goproxy.cn go mod vendor
+ 
+ # build
+ RUN go build \
+@@ -22,7 +24,7 @@ RUN go build \
+ COPY entrypoint.sh /app/entrypoint.sh
+ RUN chmod +x /app/entrypoint.sh
+ 
+-FROM ubuntu:24.04
++FROM lcr.loongnix.cn/library/debian:sid
+ 
+ COPY --from=builder /app/main /app/main
+ COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
