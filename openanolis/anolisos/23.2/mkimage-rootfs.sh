@@ -19,7 +19,7 @@ fi
 
 output="AnolisOS-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="http://build.openanolis.cn/kojifiles/output/anolis-23-20250210.5/compose/os/loongarch64/os/"
+repos_baseos_url="https://mirrors.openanolis.cn/anolis/23.2/os/loongarch64/os/"
 
 trap cleanup TERM EXIT
 
@@ -101,7 +101,7 @@ echo 'container' > /etc/dnf/vars/infra
 
 # Limit languages to help reduce size.
 LANG="en_US"
-echo "%_install_langs $LANG" > /etc/rpm/macros.image-language-conf
+#echo "%_install_langs $LANG" > /etc/rpm/macros.image-language-conf
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
 pushd /usr/share/locale > /dev/null
