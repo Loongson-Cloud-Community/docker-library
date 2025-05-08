@@ -20,7 +20,6 @@ fi
 output="openEuler-${version}.rootfs.${arch}.tar.gz"
 
 repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems4/repositories/openEuler-24.03-LTS-SP2-everything:loongarch/openEuler%3A24.03-LTS-SP2/loongarch64/"
-#repos_baseos_url1="/home/zwl/github/docker-library/openeuler/openeuler/24.03-LTS-SP2/test"
 
 trap cleanup TERM EXIT
 
@@ -63,14 +62,6 @@ enabled=1
 priority=2
 excludepkgs="${exclude_pkgs}"
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-LOONGNIX
-#[baseos1]
-#name=openEuler-$releasever1
-#baseurl=${repos_baseos_url1}
-#gpgcheck=0
-#enabled=1
-#priority=2
-#excludepkgs="${exclude_pkgs}"
-#gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-LOONGNIX
 EOF
 ####################################################################
 
