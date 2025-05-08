@@ -12,7 +12,9 @@ LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
 default: image
 
 rootfs:
-	bash mkimage-rootfs.sh
+	docker run --rm --security-opt seccomp=unconfined \
+		-v `pwd`:/wk lcr.loongnix.cn/loongnix/loongnix-server:23.1 \
+		/bin/bash -c -- '/wk/mkimage-rootfs.sh;cp /*tar.gz* /wk'
 image: rootfs
 	docker build \
 		--build-arg http_proxy=$(http_proxy) \
