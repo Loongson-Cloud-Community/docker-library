@@ -84,6 +84,7 @@ DNF_OPTS="\
 echo "Install packages : $pkg_list"
 
 rpmdb --root=${rootfs} --initdb
+dnf ${DNF_OPTS} clean packages
 dnf ${DNF_OPTS} makecache --refresh
 dnf ${DNF_OPTS} -y install ${pkg_list}
 ####################################################################
@@ -137,12 +138,12 @@ chmod +x ${rootfs}/${setting_scripts}
 chroot   ${rootfs} /${setting_scripts}
 
 ##解决在rootfs中su命令没有权限问题
-file_list="fingerprint-auth password-auth postlogin smartcard-auth system-auth user-profile"
-for file in ${file_list}
-do
-        chroot ${rootfs} authselect create-profile ${file}
-        chroot ${rootfs} ln -s /etc/authselect/custom/${file} /etc/pam.d/${file}
-done
+#file_list="fingerprint-auth password-auth postlogin smartcard-auth system-auth user-profile"
+#for file in ${file_list}
+#do
+#        chroot ${rootfs} authselect create-profile ${file}
+#        chroot ${rootfs} ln -s /etc/authselect/custom/${file} /etc/pam.d/${file}
+#done
 
 ##解决在chroot中/dev/null没有权限问题
 chroot ${rootfs} rm -rf /dev/null
