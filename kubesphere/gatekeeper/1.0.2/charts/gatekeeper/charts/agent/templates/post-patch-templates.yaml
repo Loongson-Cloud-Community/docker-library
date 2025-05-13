@@ -1,0 +1,77 @@
+# ConfigMap for storing templates
+{{- if or .Values.templates.fullInstall (gt (len .Values.templates.customInstall) 0) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatekeeper-templates
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+data:
+  gatekeeper-templates.tar.gz: |-
+    {{- .Files.Get "files/gatekeeper-templates.tar.gz" | b64enc | nindent 4 }}
+---
+# Job for applying templates
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Release.Name }}-post-patch-templates"
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+spec:
+  template:
+    spec:
+      serviceAccountName: helm-executor.gatekeeper
+      containers:
+      - name: post-patch-templates
+        image: {{ template "kubectl.image" . }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Create temp directory
+          TEMP_DIR=/tmp
+          cd $TEMP_DIR
+          
+          # Decode and extract the tar.gz file
+          cat /templates/gatekeeper-templates.tar.gz | base64 -d > templates.tar.gz
+          tar xzf templates.tar.gz
+          
+          # Apply all yaml files
+          {{- if .Values.templates.fullInstall }}
+          echo "full install"
+          for file in *.yaml; do
+            if [ -f "$file" ]; then
+              echo "Applying $file..."
+              kubectl apply -f "$file"
+            fi
+          done
+          {{- else if (gt (len .Values.templates.customInstall) 0) }}
+          TEMPLATES="{{ join "," .Values.templates.customInstall }}"
+          echo "custom install templates: $TEMPLATES"
+          for template in $(echo $TEMPLATES | sed "s/,/ /g"); do
+            echo "Applying template: $template.yaml..."
+            if [ -f "$template.yaml" ]; then
+              echo "Applying $template.yaml..."
+              kubectl apply -f "$template.yaml"
+            fi
+          done
+          {{- end }}
+          
+          # Cleanup
+          cd /
+          rm -rf $TEMP_DIR
+        volumeMounts:
+        - name: templates
+          mountPath: /templates
+      volumes:
+      - name: templates
+        configMap:
+          name: gatekeeper-templates
+      restartPolicy: Never
+{{- end }}
