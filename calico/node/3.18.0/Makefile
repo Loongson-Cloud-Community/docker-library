@@ -22,6 +22,7 @@ src/$(SOURCE):
 	git clone -b v$(TAG)-node --depth=1 $(SOURCE_URL) $@
 	cd $@ && \
 		git apply ../../$(PATCH) && \
+		go get vbom.ml/util@v0.0.0-20160121211510-db5cfe13f5cc \
 		go mod tidy && go mod download
 
 
