@@ -1,0 +1,233 @@
+From d44e0b17e9e278ec45b54a404c8d5534ab229044 Mon Sep 17 00:00:00 2001
+From: liujie <liujie@loongson.cn>
+Date: Fri, 16 May 2025 15:53:37 +0800
+Subject: [PATCH] patch
+
+---
+ Dockerfile.loong64 | 58 ++++++++++++++++++++++++++++++++++++++++++++++
+ Makefile           | 14 ++++++++---
+ go.mod             |  5 ++--
+ go.sum             | 12 ++--------
+ 4 files changed, 74 insertions(+), 15 deletions(-)
+ create mode 100644 Dockerfile.loong64
+
+diff --git a/Dockerfile.loong64 b/Dockerfile.loong64
+new file mode 100644
+index 0000000..f4c5524
+--- /dev/null
++++ b/Dockerfile.loong64
+@@ -0,0 +1,58 @@
++# Copyright (c) 2015-2016,2021 Tigera, Inc. All rights reserved.
++# Copyright IBM Corp. 2017
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++ARG QEMU_IMAGE=calico/go-build:v0.73
++ARG BIRD_IMAGE=calico/bird:latest-loongarch64
++
++FROM ${BIRD_IMAGE} as bird
++
++FROM lcr.loongnix.cn/calico/bpftool:5.19 as bpftool
++
++FROM lcr.loongnix.cn/library/debian:sid
++
++ARG ARCH=loong64
++
++# Set the minimum required Docker API version.
++ENV DOCKER_API_VERSION 1.21
++
++# Enable non-native builds of this image on an amd64 hosts.
++# This must be the first RUN command in this file!
++# we only need this for the intermediate "base" image, so we can run all the apk and other commands
++# when running on a kernel >= 4.8, this will become less relevant
++# COPY --from=qemu /usr/bin/qemu-${ARCH}-static /usr/bin/
++
++# Install remaining runtime deps required for felix from the global repository
++RUN apt update && apt install -y iptables ipset iputils* iproute2 conntrack runit file ca-certificates libelf1 libbinutils
++
++# Copy our bird binaries in
++COPY --from=bird /bird* /bin/
++
++# Copy in the filesystem - this contains felix, calico-bgp-daemon etc...
++#COPY filesystem/ /
++
++# Copy in the calico-node binary
++COPY dist/bin/calico-node-${ARCH} /bin/calico-node
++
++# Copy in the filesystem - this contains felix, calico-bgp-daemon etc...
++RUN mkdir -p /filesystem
++COPY filesystem/ /
++
++COPY --from=bpftool /bpftool /bin
++
++#RUN rm /usr/bin/qemu-${ARCH}-static
++
++CMD ["start_runit"]
++
++# Tell sv where to find the services.
++ENV SVDIR=/etc/service/enabled
+diff --git a/Makefile b/Makefile
+index 03ba53a..bfefa02 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,5 @@
+ PACKAGE_NAME?=github.com/projectcalico/node
+-GO_BUILD_VER?=v0.49
++GO_BUILD_VER?=0.73
+ 
+ # This needs to be evaluated before the common makefile is included.
+ # This var contains some default values that the common makefile may append to.
+@@ -12,7 +12,7 @@ SEMAPHORE_PROJECT_ID?=$(SEMAPHORE_NODE_PROJECT_ID)
+ #   Additions to EXTRA_DOCKER_ARGS need to happen before the include since
+ #   that variable is evaluated when we declare DOCKER_RUN and siblings.
+ ###############################################################################
+-MAKE_BRANCH?=$(GO_BUILD_VER)
++MAKE_BRANCH?=v$(GO_BUILD_VER)
+ MAKE_REPO?=https://raw.githubusercontent.com/projectcalico/go-build/$(MAKE_BRANCH)
+ 
+ Makefile.common: Makefile.common.$(MAKE_BRANCH)
+@@ -189,12 +189,20 @@ remote-deps: mod-download
+ 		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/projectcalico/felix`/bpf-apache bin/bpf; \
+ 		chmod -R +w bin/bpf; \
+ 		chmod +x bin/bpf/bpf-gpl/list-* bin/bpf/bpf-gpl/calculate-*; \
++		sed -i 's/-Werror/-Wno-error/' ./bin/bpf/bpf-apache/Makefile; \
++		sed -i 's/-Werror/-Wno-error/' ./bin/bpf/bpf-gpl/Makefile;'
++
++	sed -i '/#include <bits\/socket_type.h>/d' ./bin/bpf/bpf-gpl/connect_balancer.c
++	sed -i '/#include <linux\/bpf.h>/i\#include <sys\/socket.h>' ./bin/bpf/bpf-gpl/connect_balancer.c
++	$(DOCKER_RUN) $(CALICO_BUILD) sh -ec ' \
++                $(GIT_CONFIG_SSH) \
+ 		make -j 16 -C ./bin/bpf/bpf-apache/ all; \
+ 		make -j 16 -C ./bin/bpf/bpf-gpl/ all; \
+ 		cp bin/bpf/bpf-gpl/bin/* filesystem/usr/lib/calico/bpf/; \
+ 		cp bin/bpf/bpf-apache/bin/* filesystem/usr/lib/calico/bpf/; \
+ 		chmod -R +w filesystem/etc/calico/confd/ config/ filesystem/usr/lib/calico/bpf/'
+ 
++	
+ # We need CGO when compiling in Felix for BPF support.  However, the cross-compile doesn't support CGO yet.
+ ifeq ($(ARCH), amd64)
+ CGO_ENABLED=1
+@@ -205,7 +213,7 @@ endif
+ DOCKER_GO_BUILD_CGO=$(DOCKER_RUN) -e CGO_ENABLED=$(CGO_ENABLED) $(CALICO_BUILD)
+ 
+ $(NODE_CONTAINER_BINARY): $(LOCAL_BUILD_DEP) $(SRC_FILES) go.mod
+-	$(DOCKER_GO_BUILD_CGO) sh -c '$(GIT_CONFIG_SSH) go build -v -o $@ $(BUILD_FLAGS) $(LDFLAGS) ./cmd/calico-node/main.go'
++	$(DOCKER_GO_BUILD_CGO) sh -c '$(GIT_CONFIG_SSH) go build -buildvcs=false -v -o $@ $(BUILD_FLAGS) $(LDFLAGS) ./cmd/calico-node/main.go'
+ 
+ $(WINDOWS_BINARY):
+ 	$(DOCKER_RUN) \
+diff --git a/go.mod b/go.mod
+index b099181..9acb3ba 100644
+--- a/go.mod
++++ b/go.mod
+@@ -4,7 +4,7 @@ go 1.15
+ 
+ require (
+ 	github.com/kelseyhightower/confd v0.0.0-00010101000000-000000000000
+-	github.com/onsi/ginkgo v1.14.1
++	github.com/onsi/ginkgo v1.14.1
+ 	github.com/onsi/gomega v1.10.1
+ 	github.com/pkg/errors v0.9.1
+ 	github.com/projectcalico/cni-plugin v1.11.1-0.20210217202748-2e5af1df0a8f
+@@ -14,16 +14,17 @@ require (
+ 	github.com/sirupsen/logrus v1.4.2
+ 	github.com/vishvananda/netlink v1.1.0
+ 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
++	golang.org/x/sys v0.20.0 // indirect
+ 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7
+ 	k8s.io/api v0.19.6
+ 	k8s.io/apimachinery v0.19.6
+ 	k8s.io/client-go v0.19.6
++	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc //indirect
+ )
+ 
+ replace (
+ 	github.com/Microsoft/hcsshim => github.com/projectcalico/hcsshim v0.8.9-calico
+ 	github.com/kelseyhightower/confd => github.com/projectcalico/confd v1.0.1-0.20210216231608-027b5bb0f796
+-
+ 	github.com/sirupsen/logrus => github.com/projectcalico/logrus v1.0.4-calico
+ 
+ 	k8s.io/api => k8s.io/api v0.18.12
+diff --git a/go.sum b/go.sum
+index af47bd6..a12f2a7 100644
+--- a/go.sum
++++ b/go.sum
+@@ -752,7 +752,6 @@ golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56/go.mod h1:yigFU9vqHzYiE8U
+ golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+-golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975 h1:/Tl7pH94bvbAAHBdZJT947M/+gp0+CqQXDtMRC0fseo=
+ golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 h1:psW17arqaxU48Z5kZ0CQnkZWQJsqcURM6tKiBApRjXI=
+ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
+@@ -807,7 +806,6 @@ golang.org/x/net v0.0.0-20191004110552-13f9640d40b9/go.mod h1:z5CRVTTTmAJ677TzLL
+ golang.org/x/net v0.0.0-20191007182048-72f939374954/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20200202094626-16171245cfb2/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20200226121028-0de0cce0169b/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+-golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7 h1:AeiKBIuRw3UomYXSbLy0Mc2dDLfdtbT/IVn4keq83P0=
+ golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7/go.mod h1:qpuaurCH72eLCgpAm/N6yyVIVM9cpaDIP3A8BGJEC5A=
+ golang.org/x/net v0.0.0-20201110031124-69a78807bb2b h1:uwuIcX0g4Yl1NC5XAz37xsr2lTtcqevgzYNVt49waME=
+ golang.org/x/net v0.0.0-20201110031124-69a78807bb2b/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
+@@ -859,17 +857,15 @@ golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7/go.mod h1:h1NjWce9XRLGQEsW7w
+ golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+-golang.org/x/sys v0.0.0-20200519105757-fe76b779f299 h1:DYfZAGf2WMFjMxbgTjaC+2HC7NkNAQs+6Q8b9WEB/F4=
+ golang.org/x/sys v0.0.0-20200519105757-fe76b779f299/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+-golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f h1:+Nyd8tzPX9R7BWHguqsrbFdRx3WQ/1ib8I44HXV5yTA=
+ golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+-golang.org/x/sys v0.0.0-20201112073958-5cba982894dd h1:5CtCZbICpIOFdgO940moixOPjc0178IU44m4EjOO5IY=
+ golang.org/x/sys v0.0.0-20201112073958-5cba982894dd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
++golang.org/x/sys v0.20.0 h1:Od9JTbYCk261bKm4M/mw7AklTlFYIa0bIp9BgSm1S8Y=
++golang.org/x/sys v0.20.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+ golang.org/x/text v0.0.0-20160726164857-2910a502d2bf/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+ golang.org/x/text v0.0.0-20170915090833-1cbadb444a80/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+ golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+ golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+-golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
+ golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
+ golang.org/x/text v0.3.3 h1:cokOdA+Jmi5PJGXLlLllQSgYigAEfHXJAERHVMaCc2k=
+ golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+@@ -947,7 +943,6 @@ google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiq
+ google.golang.org/grpc v1.21.0/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
+ google.golang.org/grpc v1.23.0/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyacEbxg=
+ google.golang.org/grpc v1.23.1/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyacEbxg=
+-google.golang.org/grpc v1.26.0 h1:2dTRdpdFEEhJYQD8EMLB61nnrzSCTbG38PhqdhvOltg=
+ google.golang.org/grpc v1.26.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
+ google.golang.org/grpc v1.27.0 h1:rRYRFMVgRv6E0D70Skyfsr28tDXIuuPZyWGMPdMcnXg=
+ google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
+@@ -1028,14 +1023,12 @@ k8s.io/client-go v0.18.12 h1:MDGRE2tGidz29g45dI4kfelJo+aRmDqWx0Way8mD88A=
+ k8s.io/client-go v0.18.12/go.mod h1:0aC8XkA09dX/goYqHQJ/kVv0zL1t+weOZt3pmz9LpxA=
+ k8s.io/cloud-provider v0.18.12/go.mod h1:bROgcXZMeJAkPy282znU131MkjdWcvqddvdrlZHrNi8=
+ k8s.io/cluster-bootstrap v0.18.12/go.mod h1:kMn04g6n8B7UHYuVMmsqffi54IzBfEShIjUcZhDUPGs=
+-k8s.io/code-generator v0.18.12 h1:/cSUfqlYZ90y0WDxxWfwfTXUGkJer2Gt1L3AIaVvviQ=
+ k8s.io/code-generator v0.18.12/go.mod h1:TgNEVx9hCyPGpdtCWA34olQYLkh3ok9ar7XfSsr8b6c=
+ k8s.io/component-base v0.18.12 h1:1BfsKoZZgSU1GanVsCDgMkCVPnT0B8iaHV1Ui0ror6Y=
+ k8s.io/component-base v0.18.12/go.mod h1:pRGKXsx2KWfsJqlDi4sbCc1jpaB87rXIIqupjhr5wj0=
+ k8s.io/cri-api v0.18.12/go.mod h1:OJtpjDvfsKoLGhvcc0qfygved0S0dGX56IJzPbqTG1s=
+ k8s.io/csi-translation-lib v0.18.12/go.mod h1:U5dgTUVDHXlx5xfgdcjZHy6S3EOmPOPYUhECKgoazgQ=
+ k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
+-k8s.io/gengo v0.0.0-20200114144118-36b2048a9120 h1:RPscN6KhmG54S33L+lr3GS+oD1jmchIU0ll519K6FA4=
+ k8s.io/gengo v0.0.0-20200114144118-36b2048a9120/go.mod h1:ezvh/TsK7cY6rbqRK0oQQ8IAqLxYwwyPxAX1Pzy0ii0=
+ k8s.io/heapster v1.2.0-beta.1/go.mod h1:h1uhptVXMwC8xtZBYsPXKVi8fpdlYkTs6k949KozGrM=
+ k8s.io/klog v0.0.0-20181102134211-b9b56d5dfc92/go.mod h1:Gq+BEi5rUBO/HRz0bTSXDUcqjScdoY3a9IHpCEIOOfk=
+@@ -1059,7 +1052,6 @@ k8s.io/metrics v0.18.12/go.mod h1:x1TOyTs9VQHLfdiHB0xcY6D6hUsjvVXX0mxCsDih4h8=
+ k8s.io/repo-infra v0.0.1-alpha.1/go.mod h1:wO1t9WaB99V80ljbeENTnayuEEwNZt7gECYh/CEyOJ8=
+ k8s.io/sample-apiserver v0.18.12/go.mod h1:8M0teb5v5/Ai0aBC8Y9Eqr8Q+cNUzBy68KpTtKZm10M=
+ k8s.io/system-validators v1.0.4/go.mod h1:HgSgTg4NAGNoYYjKsUyk52gdNi2PVDswQ9Iyn66R7NI=
+-k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 h1:d4vVOjXm687F1iLSP2q3lyPPuyvTUt3aVoBpi2DqRsU=
+ k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
+ k8s.io/utils v0.0.0-20200729134348-d5654de09c73 h1:uJmqzgNWG7XyClnU/mLPBWwfKKF1K8Hf8whTseBgJcg=
+ k8s.io/utils v0.0.0-20200729134348-d5654de09c73/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
+-- 
+2.41.0
+
