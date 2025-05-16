@@ -18,6 +18,7 @@ image: src/$(SOURCE)
 	docker tag calico/node:latest-loong64 $(IMAGE)
 
 src/$(SOURCE):
+	export GOPROXY=https://goproxy.cn,direct
 	git clone -b v$(TAG)-node --depth=1 $(SOURCE_URL) $@
 	cd $@ && \
 		git apply ../../$(PATCH) && \
