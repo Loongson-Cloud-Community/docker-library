@@ -1,19 +1,19 @@
-From ae121f7214098aa133a47311970faf2190215604 Mon Sep 17 00:00:00 2001
+From d44e0b17e9e278ec45b54a404c8d5534ab229044 Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Wed, 14 May 2025 14:43:21 +0800
+Date: Fri, 16 May 2025 15:53:37 +0800
 Subject: [PATCH] patch
 
 ---
  Dockerfile.loong64 | 58 ++++++++++++++++++++++++++++++++++++++++++++++
  Makefile           | 14 ++++++++---
- go.mod             |  1 +
+ go.mod             |  5 ++--
  go.sum             | 12 ++--------
- 4 files changed, 72 insertions(+), 13 deletions(-)
+ 4 files changed, 74 insertions(+), 15 deletions(-)
  create mode 100644 Dockerfile.loong64
 
 diff --git a/Dockerfile.loong64 b/Dockerfile.loong64
 new file mode 100644
-index 000000000..f4c55247b
+index 0000000..f4c5524
 --- /dev/null
 +++ b/Dockerfile.loong64
 @@ -0,0 +1,58 @@
@@ -76,7 +76,7 @@ index 000000000..f4c55247b
 +# Tell sv where to find the services.
 +ENV SVDIR=/etc/service/enabled
 diff --git a/Makefile b/Makefile
-index 03ba53a02..bfefa02d6 100644
+index 03ba53a..bfefa02 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1,5 +1,5 @@
@@ -126,10 +126,19 @@ index 03ba53a02..bfefa02d6 100644
  $(WINDOWS_BINARY):
  	$(DOCKER_RUN) \
 diff --git a/go.mod b/go.mod
-index b09918116..b6899d481 100644
+index b099181..9acb3ba 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -14,6 +14,7 @@ require (
+@@ -4,7 +4,7 @@ go 1.15
+ 
+ require (
+ 	github.com/kelseyhightower/confd v0.0.0-00010101000000-000000000000
+-	github.com/onsi/ginkgo v1.14.1
++	github.com/onsi/ginkgo v1.14.1
+ 	github.com/onsi/gomega v1.10.1
+ 	github.com/pkg/errors v0.9.1
+ 	github.com/projectcalico/cni-plugin v1.11.1-0.20210217202748-2e5af1df0a8f
+@@ -14,16 +14,17 @@ require (
  	github.com/sirupsen/logrus v1.4.2
  	github.com/vishvananda/netlink v1.1.0
  	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
@@ -137,8 +146,19 @@ index b09918116..b6899d481 100644
  	gopkg.in/fsnotify/fsnotify.v1 v1.4.7
  	k8s.io/api v0.19.6
  	k8s.io/apimachinery v0.19.6
+ 	k8s.io/client-go v0.19.6
++	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc //indirect
+ )
+ 
+ replace (
+ 	github.com/Microsoft/hcsshim => github.com/projectcalico/hcsshim v0.8.9-calico
+ 	github.com/kelseyhightower/confd => github.com/projectcalico/confd v1.0.1-0.20210216231608-027b5bb0f796
+-
+ 	github.com/sirupsen/logrus => github.com/projectcalico/logrus v1.0.4-calico
+ 
+ 	k8s.io/api => k8s.io/api v0.18.12
 diff --git a/go.sum b/go.sum
-index af47bd657..a12f2a7e5 100644
+index af47bd6..a12f2a7 100644
 --- a/go.sum
 +++ b/go.sum
 @@ -752,7 +752,6 @@ golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56/go.mod h1:yigFU9vqHzYiE8U
