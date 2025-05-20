@@ -1,16 +1,16 @@
-From 84749714dbcc8fce3223dc0c61734ee19364c1a2 Mon Sep 17 00:00:00 2001
+From 54c0668715194e21324f30f74976c3831ca605e9 Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Mon, 19 May 2025 15:41:56 +0800
+Date: Tue, 20 May 2025 10:07:55 +0800
 Subject: [PATCH] patch
 
 ---
- Makefile |  6 +++-
+ Makefile |  9 ++++--
  go.mod   |  1 +
  go.sum   | 93 ++------------------------------------------------------
- 3 files changed, 8 insertions(+), 92 deletions(-)
+ 3 files changed, 9 insertions(+), 94 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 2f6e305..e034e15 100644
+index 2f6e305..04a62ce 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -8,7 +8,7 @@ OUT_DIR?=$(PWD)/_output
@@ -18,7 +18,7 @@ index 2f6e305..e034e15 100644
  
  VERSION?=latest
 -GOIMAGE=golang:1.15
-+GOIMAGE=lcr.loongnix.cn/library/golang:1.21
++GOIMAGE=lcr.loongnix.cn/calico/go-build:0.73
  GO111MODULE=on
  export GO111MODULE
  
@@ -32,14 +32,17 @@ index 2f6e305..e034e15 100644
  
  .PHONY: all docker-build push-% push test verify-gofmt gofmt verify build-local-image
  
-@@ -38,6 +41,7 @@ $(OUT_DIR)/%/adapter: $(src_deps)
+@@ -37,8 +40,8 @@ $(OUT_DIR)/%/adapter: $(src_deps)
+ 	CGO_ENABLED=0 GOARCH=$* go build -tags netgo -o $(OUT_DIR)/$*/adapter github.com/kubernetes-sigs/prometheus-adapter/cmd/adapter
  
  docker-build: $(OUT_DIR)/Dockerfile
- 	docker run -it -v $(OUT_DIR):/build -v $(PWD):/go/src/github.com/kubernetes-sigs/prometheus-adapter -e GOARCH=$(ARCH) $(GOIMAGE) /bin/bash -c "\
-+		pwd \
- 		CGO_ENABLED=0 go build -tags netgo -o /build/$(ARCH)/adapter github.com/kubernetes-sigs/prometheus-adapter/cmd/adapter"
+-	docker run -it -v $(OUT_DIR):/build -v $(PWD):/go/src/github.com/kubernetes-sigs/prometheus-adapter -e GOARCH=$(ARCH) $(GOIMAGE) /bin/bash -c "\
+-		CGO_ENABLED=0 go build -tags netgo -o /build/$(ARCH)/adapter github.com/kubernetes-sigs/prometheus-adapter/cmd/adapter"
++	docker run -it -v $(OUT_DIR):/build -v $(PWD):/go/src/github.com/kubernetes-sigs/prometheus-adapter -w /go/src/github.com/kubernetes-sigs/prometheus-adapter  -e GOARCH=$(ARCH) $(GOIMAGE) /bin/bash -c "\
++		CGO_ENABLED=0 go build -tags netgo -v -o /build/$(ARCH)/adapter ./cmd/adapter"
  
  	docker build -t $(REGISTRY)/$(IMAGE)-$(ARCH):$(VERSION) --build-arg ARCH=$(ARCH) --build-arg BASEIMAGE=$(BASEIMAGE) $(OUT_DIR)
+ 
 diff --git a/go.mod b/go.mod
 index eb51f71..e4e49c9 100644
 --- a/go.mod

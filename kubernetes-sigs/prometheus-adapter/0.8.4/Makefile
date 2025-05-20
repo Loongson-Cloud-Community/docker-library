@@ -18,7 +18,7 @@ image: src/$(SOURCE)
 	docker tag directxman12/k8s-prometheus-adapter-loong64:latest $(IMAGE) 	
 src/$(SOURCE):
 	git clone -b v$(TAG) --depth=1 $(SOURCE_URL) $@
-	cd $@ && git apply ../../$(PATCH)
+	cd $@ && git apply ../../$(PATCH) && go mod tidy && go mod download
 clean:
 	rm -rf src 
 
