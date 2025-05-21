@@ -1,14 +1,14 @@
-From d44e0b17e9e278ec45b54a404c8d5534ab229044 Mon Sep 17 00:00:00 2001
+From 0e41bf474d4a9b89c7e5f2c34c52c1927eccc379 Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Fri, 16 May 2025 15:53:37 +0800
+Date: Wed, 21 May 2025 17:23:57 +0800
 Subject: [PATCH] patch
 
 ---
  Dockerfile.loong64 | 58 ++++++++++++++++++++++++++++++++++++++++++++++
- Makefile           | 14 ++++++++---
- go.mod             |  5 ++--
- go.sum             | 12 ++--------
- 4 files changed, 74 insertions(+), 15 deletions(-)
+ Makefile           | 15 +++++++++---
+ go.mod             |  3 ++-
+ go.sum             | 13 +++--------
+ 4 files changed, 75 insertions(+), 14 deletions(-)
  create mode 100644 Dockerfile.loong64
 
 diff --git a/Dockerfile.loong64 b/Dockerfile.loong64
@@ -76,7 +76,7 @@ index 0000000..f4c5524
 +# Tell sv where to find the services.
 +ENV SVDIR=/etc/service/enabled
 diff --git a/Makefile b/Makefile
-index 03ba53a..bfefa02 100644
+index 03ba53a..5151608 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -1,5 +1,5 @@
@@ -95,7 +95,12 @@ index 03ba53a..bfefa02 100644
  MAKE_REPO?=https://raw.githubusercontent.com/projectcalico/go-build/$(MAKE_BRANCH)
  
  Makefile.common: Makefile.common.$(MAKE_BRANCH)
-@@ -189,12 +189,20 @@ remote-deps: mod-download
+@@ -185,16 +185,25 @@ remote-deps: mod-download
+ 		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/kelseyhightower/confd`/etc/calico/confd/config filesystem/etc/calico/confd/config; \
+ 		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/kelseyhightower/confd`/etc/calico/confd/templates filesystem/etc/calico/confd/templates; \
+ 		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/projectcalico/libcalico-go`/config config; \
++		go get vbom.ml/util@v0.0.0-20160121211510-db5cfe13f5cc; \
+ 		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/projectcalico/felix`/bpf-gpl bin/bpf; \
  		cp -r `go list -mod=mod -m -f "{{.Dir}}" github.com/projectcalico/felix`/bpf-apache bin/bpf; \
  		chmod -R +w bin/bpf; \
  		chmod +x bin/bpf/bpf-gpl/list-* bin/bpf/bpf-gpl/calculate-*; \
@@ -116,7 +121,7 @@ index 03ba53a..bfefa02 100644
  # We need CGO when compiling in Felix for BPF support.  However, the cross-compile doesn't support CGO yet.
  ifeq ($(ARCH), amd64)
  CGO_ENABLED=1
-@@ -205,7 +213,7 @@ endif
+@@ -205,7 +214,7 @@ endif
  DOCKER_GO_BUILD_CGO=$(DOCKER_RUN) -e CGO_ENABLED=$(CGO_ENABLED) $(CALICO_BUILD)
  
  $(NODE_CONTAINER_BINARY): $(LOCAL_BUILD_DEP) $(SRC_FILES) go.mod
@@ -126,18 +131,9 @@ index 03ba53a..bfefa02 100644
  $(WINDOWS_BINARY):
  	$(DOCKER_RUN) \
 diff --git a/go.mod b/go.mod
-index b099181..9acb3ba 100644
+index b099181..3af050d 100644
 --- a/go.mod
 +++ b/go.mod
-@@ -4,7 +4,7 @@ go 1.15
- 
- require (
- 	github.com/kelseyhightower/confd v0.0.0-00010101000000-000000000000
--	github.com/onsi/ginkgo v1.14.1
-+	github.com/onsi/ginkgo v1.14.1
- 	github.com/onsi/gomega v1.10.1
- 	github.com/pkg/errors v0.9.1
- 	github.com/projectcalico/cni-plugin v1.11.1-0.20210217202748-2e5af1df0a8f
 @@ -14,16 +14,17 @@ require (
  	github.com/sirupsen/logrus v1.4.2
  	github.com/vishvananda/netlink v1.1.0
@@ -147,7 +143,7 @@ index b099181..9acb3ba 100644
  	k8s.io/api v0.19.6
  	k8s.io/apimachinery v0.19.6
  	k8s.io/client-go v0.19.6
-+	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc //indirect
++	vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc // indirect
  )
  
  replace (
@@ -158,7 +154,7 @@ index b099181..9acb3ba 100644
  
  	k8s.io/api => k8s.io/api v0.18.12
 diff --git a/go.sum b/go.sum
-index af47bd6..a12f2a7 100644
+index af47bd6..5b36afb 100644
 --- a/go.sum
 +++ b/go.sum
 @@ -752,7 +752,6 @@ golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56/go.mod h1:yigFU9vqHzYiE8U
@@ -228,6 +224,12 @@ index af47bd6..a12f2a7 100644
  k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
  k8s.io/utils v0.0.0-20200729134348-d5654de09c73 h1:uJmqzgNWG7XyClnU/mLPBWwfKKF1K8Hf8whTseBgJcg=
  k8s.io/utils v0.0.0-20200729134348-d5654de09c73/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
+@@ -1081,4 +1073,5 @@ sigs.k8s.io/yaml v1.1.0/go.mod h1:UJmg0vDUVViEyp3mgSv9WPwZCDxu4rQW1olrI1uml+o=
+ sigs.k8s.io/yaml v1.2.0 h1:kr/MCeFWJWTwyaHoR9c8EjH9OumOmoF9YGiZd7lFm/Q=
+ sigs.k8s.io/yaml v1.2.0/go.mod h1:yfXDCHCao9+ENCvLSE62v9VSji2MKu5jeNfTrofGhJc=
+ sourcegraph.com/sqs/pbtypes v0.0.0-20180604144634-d3ebe8f20ae4/go.mod h1:ketZ/q3QxT9HOBeFhu6RdvsftgpsbFHBF5Cas6cDKZ0=
++vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc h1:MksmcCZQWAQJCTA5T0jgI/0sJ51AVm4Z41MrmfczEoc=
+ vbom.ml/util v0.0.0-20160121211510-db5cfe13f5cc/go.mod h1:so/NYdZXCz+E3ZpW0uAoCj6uzU2+8OWDFv/HxUSs7kI=
 -- 
 2.41.0
 
