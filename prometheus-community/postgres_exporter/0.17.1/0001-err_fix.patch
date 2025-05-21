@@ -1,15 +1,16 @@
-From ceecf05bf2f440a9a6222574de02172056ae1e95 Mon Sep 17 00:00:00 2001
+From 62d79a5cffb01a891c1b3d911769252799f124ec Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Tue, 20 May 2025 15:50:55 +0800
+Date: Wed, 21 May 2025 10:55:45 +0800
 Subject: [PATCH] patch
 
 ---
  Dockerfile                    |  8 +++-----
+ Makefile                      |  2 +-
  Makefile.common               |  9 ++++++---
  cmd/postgres_exporter/main.go |  6 ++++--
  go.mod                        |  8 ++++----
  go.sum                        | 12 ++++++------
- 5 files changed, 23 insertions(+), 20 deletions(-)
+ 6 files changed, 24 insertions(+), 21 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
 index 4d28795..e36fb5a 100644
@@ -30,6 +31,19 @@ index 4d28795..e36fb5a 100644
  
  EXPOSE     9187
  USER       nobody
+diff --git a/Makefile b/Makefile
+index 114e343..3dd1ecd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ all::
+ 
+ # Needs to be defined before including Makefile.common to auto-generate targets
+-DOCKER_ARCHS ?= amd64 armv7 arm64 ppc64le
++DOCKER_ARCHS ?= loong64
+ DOCKER_REPO  ?= prometheuscommunity
+ 
+ include Makefile.common
 diff --git a/Makefile.common b/Makefile.common
 index d1576bb..b58102e 100644
 --- a/Makefile.common

@@ -14,9 +14,10 @@ PATCH=0001-err_fix.patch
 default: image
 
 image: src/$(SOURCE)
+	export ARCH=loong64
 	$(MAKE) -C src/$(SOURCE) build
 	$(MAKE) -C src/$(SOURCE) common-docker
-	docker tag prometheuscommunity/postgres-exporter-linux-loongarch64:HEAD $(IMAGE) 	
+	docker tag prometheuscommunity/postgres-exporter-linux-loong64:HEAD $(IMAGE) 	
 src/$(SOURCE):
 	git clone -b v$(TAG) --depth=1 $(SOURCE_URL) $@
 	cd $@ && git apply ../../$(PATCH)
