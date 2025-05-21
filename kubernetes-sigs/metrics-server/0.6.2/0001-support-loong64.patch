@@ -1,15 +1,15 @@
-From 34104ea1f00bfa52c630dd66656643c841606e5c Mon Sep 17 00:00:00 2001
+From 1c7d755ba031494311bb7987ed885d13cdeeff54 Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Tue, 20 May 2025 20:44:56 +0800
+Date: Wed, 21 May 2025 11:23:49 +0800
 Subject: [PATCH] patch
 
 ---
  Dockerfile | 4 ++--
- Makefile   | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ Makefile   | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index a20e788a..17b203b3 100644
+index a20e788..17b203b 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -1,7 +1,7 @@
@@ -31,18 +31,20 @@ index a20e788a..17b203b3 100644
  USER 65534
  ENTRYPOINT ["/metrics-server"]
 diff --git a/Makefile b/Makefile
-index 0bf8cf52..8ef10373 100644
+index 0bf8cf5..4788e60 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -44,7 +44,7 @@ CONTAINER_ARCH_TARGETS=$(addprefix container-,$(ALL_ARCHITECTURES))
+@@ -44,8 +44,8 @@ CONTAINER_ARCH_TARGETS=$(addprefix container-,$(ALL_ARCHITECTURES))
  container:
  	# Pull base image explicitly. Keep in sync with Dockerfile, otherwise
  	# GCB builds will start failing.
 -	docker pull golang:1.17.13
+-	docker build -t $(REGISTRY)/metrics-server-$(ARCH):$(CHECKSUM) --build-arg ARCH=$(ARCH) --build-arg GIT_TAG=$(GIT_TAG) --build-arg GIT_COMMIT=$(GIT_COMMIT) .
 +	docker pull lcr.loongnix.cn/calico/go-build:0.73
- 	docker build -t $(REGISTRY)/metrics-server-$(ARCH):$(CHECKSUM) --build-arg ARCH=$(ARCH) --build-arg GIT_TAG=$(GIT_TAG) --build-arg GIT_COMMIT=$(GIT_COMMIT) .
++	docker build -t $(REGISTRY)/metrics-server-$(ARCH):latest --build-arg ARCH=$(ARCH) --build-arg GIT_TAG=$(GIT_TAG) --build-arg GIT_COMMIT=$(GIT_COMMIT) .
  
  .PHONY: container-all
+ container-all: $(CONTAINER_ARCH_TARGETS);
 -- 
 2.41.0
 
