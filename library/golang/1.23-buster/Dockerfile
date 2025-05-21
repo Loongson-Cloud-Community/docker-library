@@ -17,11 +17,11 @@ RUN set -eux; \
 
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.23.3
+ENV GOLANG_VERSION 1.23.9
 
 RUN set -eux; \
-	url='https://go.dev/dl/go1.23.3.linux-loong64.tar.gz'; \
-	sha256='1d0161a8946c7d99f717bad23631738408511f9f87e78d852224a023d8882ad8'; \
+	url='https://go.dev/dl/go1.23.9.linux-loong64.tar.gz'; \
+	sha256='50b08d8b3a7fb027608db01ff63152001b33710b2ec9acad995adbb63bd8a02a'; \
 	wget -O go.tgz "$url" --progress=dot:giga; \
 	echo "$sha256 *go.tgz" | sha256sum -c -; \
 	tar -C /usr/local -xzf go.tgz; \
