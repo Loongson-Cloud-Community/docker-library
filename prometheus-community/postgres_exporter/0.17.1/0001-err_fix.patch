@@ -1,0 +1,175 @@
+From 62d79a5cffb01a891c1b3d911769252799f124ec Mon Sep 17 00:00:00 2001
+From: liujie <liujie@loongson.cn>
+Date: Wed, 21 May 2025 10:55:45 +0800
+Subject: [PATCH] patch
+
+---
+ Dockerfile                    |  8 +++-----
+ Makefile                      |  2 +-
+ Makefile.common               |  9 ++++++---
+ cmd/postgres_exporter/main.go |  6 ++++--
+ go.mod                        |  8 ++++----
+ go.sum                        | 12 ++++++------
+ 6 files changed, 24 insertions(+), 21 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 4d28795..e36fb5a 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,11 +1,9 @@
+ ARG ARCH="amd64"
+ ARG OS="linux"
+-FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
+-LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
++FROM lcr.loongnix.cn/library/busybox:latest
++LABEL maintainer="liujie <liujie@loongson.cn>"
+ 
+-ARG ARCH="amd64"
+-ARG OS="linux"
+-COPY .build/${OS}-${ARCH}/postgres_exporter /bin/postgres_exporter
++COPY ./postgres_exporter /bin/postgres_exporter
+ 
+ EXPOSE     9187
+ USER       nobody
+diff --git a/Makefile b/Makefile
+index 114e343..3dd1ecd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ all::
+ 
+ # Needs to be defined before including Makefile.common to auto-generate targets
+-DOCKER_ARCHS ?= amd64 armv7 arm64 ppc64le
++DOCKER_ARCHS ?= loong64
+ DOCKER_REPO  ?= prometheuscommunity
+ 
+ include Makefile.common
+diff --git a/Makefile.common b/Makefile.common
+index d1576bb..b58102e 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -55,8 +55,11 @@ ifneq ($(shell command -v gotestsum 2> /dev/null),)
+ endif
+ endif
+ 
+-PROMU_VERSION ?= 0.17.0
+-PROMU_URL     := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
++#PROMU_VERSION ?= 0.17.0
++PROMU_VERSION ?= 0.15.0
++#PROMU_URL     := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
++
++PROMU_URL     := https://cloud.loongnix.cn/releases/loongarch64/prometheus/promu/0.15.0/promu-0.15.0_Linux-Loong64.tar.gz
+ 
+ SKIP_GOLANGCI_LINT :=
+ GOLANGCI_LINT :=
+@@ -245,7 +248,7 @@ $(PROMU):
+ 	$(eval PROMU_TMP := $(shell mktemp -d))
+ 	curl -s -L $(PROMU_URL) | tar -xvzf - -C $(PROMU_TMP)
+ 	mkdir -p $(FIRST_GOPATH)/bin
+-	cp $(PROMU_TMP)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)/promu $(FIRST_GOPATH)/bin/promu
++	cp $(PROMU_TMP)/promu $(FIRST_GOPATH)/bin/promu
+ 	rm -r $(PROMU_TMP)
+ 
+ .PHONY: proto
+diff --git a/cmd/postgres_exporter/main.go b/cmd/postgres_exporter/main.go
+index 093ddd3..63198e6 100644
+--- a/cmd/postgres_exporter/main.go
++++ b/cmd/postgres_exporter/main.go
+@@ -30,6 +30,7 @@ import (
+ 	"github.com/prometheus/common/version"
+ 	"github.com/prometheus/exporter-toolkit/web"
+ 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
++	"github.com/go-kit/log"
+ )
+ 
+ var (
+@@ -168,8 +169,9 @@ func main() {
+ 	http.HandleFunc("/probe", handleProbe(logger, excludedDatabases))
+ 
+ 	srv := &http.Server{}
+-	if err := web.ListenAndServe(srv, webConfig, logger); err != nil {
+-		logger.Error("Error running HTTP server", "err", err)
++	glogger := log.NewLogfmtLogger(os.Stderr)
++	if nerr := web.ListenAndServe(srv, webConfig, glogger); nerr != nil {
++		logger.Error("error creating landing page", "err", nerr)
+ 		os.Exit(1)
+ 	}
+ }
+diff --git a/go.mod b/go.mod
+index a7b376b..e850a02 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,6 +1,6 @@
+ module github.com/prometheus-community/postgres_exporter
+ 
+-go 1.23.0
++go 1.21.0
+ 
+ require (
+ 	github.com/DATA-DOG/go-sqlmock v1.5.2
+@@ -10,7 +10,7 @@ require (
+ 	github.com/prometheus/client_golang v1.20.5
+ 	github.com/prometheus/client_model v0.6.1
+ 	github.com/prometheus/common v0.62.0
+-	github.com/prometheus/exporter-toolkit v0.14.0
++	github.com/prometheus/exporter-toolkit v0.10.0
+ 	github.com/smartystreets/goconvey v1.8.1
+ 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+ 	gopkg.in/yaml.v2 v2.4.0
+@@ -22,14 +22,14 @@ require (
+ 	github.com/beorn7/perks v1.0.1 // indirect
+ 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+ 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
++	github.com/go-kit/log v0.2.1 // indirect
++	github.com/go-logfmt/logfmt v0.5.1 // indirect
+ 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+ 	github.com/jpillora/backoff v1.0.0 // indirect
+ 	github.com/jtolds/gls v4.20.0+incompatible // indirect
+ 	github.com/klauspost/compress v1.17.9 // indirect
+ 	github.com/kr/pretty v0.3.1 // indirect
+ 	github.com/kr/text v0.2.0 // indirect
+-	github.com/mdlayher/socket v0.4.1 // indirect
+-	github.com/mdlayher/vsock v1.2.1 // indirect
+ 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+ 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
+ 	github.com/prometheus/procfs v0.15.1 // indirect
+diff --git a/go.sum b/go.sum
+index a57fc83..d94992e 100644
+--- a/go.sum
++++ b/go.sum
+@@ -16,6 +16,10 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
+ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
++github.com/go-kit/log v0.2.1 h1:MRVx0/zhvdseW+Gza6N9rVzU/IVzaeE1SFI4raAhmBU=
++github.com/go-kit/log v0.2.1/go.mod h1:NwTd00d/i8cPZ3xOwwiv2PO5MOcx78fFErGNcVmBjv0=
++github.com/go-logfmt/logfmt v0.5.1 h1:otpy5pqBCBZ1ng9RQ0dPu4PN7ba75Y/aA+UpowDyNVA=
++github.com/go-logfmt/logfmt v0.5.1/go.mod h1:WYhtIu8zTZfxdn5+rREduYbwxfcBr/Vr6KEVveWlfTs=
+ github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
+ github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+ github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+@@ -39,10 +43,6 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
+ github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
+ github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+ github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+-github.com/mdlayher/socket v0.4.1 h1:eM9y2/jlbs1M615oshPQOHZzj6R6wMT7bX5NPiQvn2U=
+-github.com/mdlayher/socket v0.4.1/go.mod h1:cAqeGjoufqdxWkD7DkpyS+wcefOtmu5OQ8KuoJGIReA=
+-github.com/mdlayher/vsock v1.2.1 h1:pC1mTJTvjo1r9n9fbm7S1j04rCgCzhCOS5DY0zqHlnQ=
+-github.com/mdlayher/vsock v1.2.1/go.mod h1:NRfCibel++DgeMD8z/hP+PPTjlNJsdPOmxcnENvE+SE=
+ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
+ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
+ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+SVif2QVs3tOP0zanoHgBEVAwHxUSIzRqU=
+@@ -56,8 +56,8 @@ github.com/prometheus/client_model v0.6.1 h1:ZKSh/rekM+n3CeS952MLRAdFwIKqeY8b62p
+ github.com/prometheus/client_model v0.6.1/go.mod h1:OrxVMOVHjw3lKMa8+x6HeMGkHMQyHDk9E3jmP2AmGiY=
+ github.com/prometheus/common v0.62.0 h1:xasJaQlnWAeyHdUBeGjXmutelfJHWMRr+Fg4QszZ2Io=
+ github.com/prometheus/common v0.62.0/go.mod h1:vyBcEuLSvWos9B1+CyL7JZ2up+uFzXhkqml0W5zIY1I=
+-github.com/prometheus/exporter-toolkit v0.14.0 h1:NMlswfibpcZZ+H0sZBiTjrA3/aBFHkNZqE+iCj5EmRg=
+-github.com/prometheus/exporter-toolkit v0.14.0/go.mod h1:Gu5LnVvt7Nr/oqTBUC23WILZepW0nffNo10XdhQcwWA=
++github.com/prometheus/exporter-toolkit v0.10.0 h1:yOAzZTi4M22ZzVxD+fhy1URTuNRj/36uQJJ5S8IPza8=
++github.com/prometheus/exporter-toolkit v0.10.0/go.mod h1:+sVFzuvV5JDyw+Ih6p3zFxZNVnKQa3x5qPmDSiPu4ZY=
+ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0learggepc=
+ github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
+ github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
+-- 
+2.41.0
+
