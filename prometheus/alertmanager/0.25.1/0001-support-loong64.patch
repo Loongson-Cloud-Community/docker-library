@@ -1,24 +1,23 @@
-From eea272d17f08ecee6402ee67577c6c703ff8f02e Mon Sep 17 00:00:00 2001
-From: zhangguanzhang <zhangguanzhang@qq.com>
-Date: Fri, 22 Sep 2023 17:54:57 +0800
-Subject: [PATCH] support loong64
+From 2c3cfa91244ff9c6bc86f8b69ad5a594e8f661b7 Mon Sep 17 00:00:00 2001
+From: liujie <liujie@loongson.cn>
+Date: Thu, 22 May 2025 14:44:54 +0800
+Subject: [PATCH] patch
 
 ---
- Dockerfile      | 8 ++++----
+ Dockerfile      | 7 +++----
  Makefile.common | 8 +++++---
- 2 files changed, 9 insertions(+), 7 deletions(-)
+ 2 files changed, 8 insertions(+), 7 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index b1d31b31..064a4182 100644
+index b1d31b3..942b49a 100644
 --- a/Dockerfile
 +++ b/Dockerfile
-@@ -1,12 +1,12 @@
+@@ -1,12 +1,11 @@
  ARG ARCH="amd64"
  ARG OS="linux"
 -FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
 -LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
-+FROM cr.loongnix.cn/prometheus/busybox:glibc
-+LABEL maintainer="zhangguanzhang@qq.com"
++FROM lcr.loongnix.cn/prometheus/busybox:1.32.0-glibc
  
  ARG ARCH="amd64"
  ARG OS="linux"
@@ -30,7 +29,7 @@ index b1d31b31..064a4182 100644
  
  RUN mkdir -p /alertmanager && \
 diff --git a/Makefile.common b/Makefile.common
-index e358db69..5545291b 100644
+index e358db6..5545291 100644
 --- a/Makefile.common
 +++ b/Makefile.common
 @@ -56,7 +56,7 @@ endif
@@ -70,4 +69,5 @@ index e358db69..5545291b 100644
  
  .PHONY: proto
 -- 
-2.25.1
+2.41.0
+
