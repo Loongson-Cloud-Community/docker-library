@@ -4,14 +4,14 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM lcr.loongnix.cn/library/alpine:3.18
+FROM lcr.loongnix.cn/library/alpine:3.21
 
 # https://ftp.gnu.org/gnu/bash/?C=M;O=D
-ENV _BASH_VERSION 5.2.15
-ENV _BASH_BASELINE 5.2.15
-ENV _BASH_BASELINE_PATCH 15
+ENV _BASH_VERSION 5.2.37
+ENV _BASH_BASELINE 5.2.37
+ENV _BASH_BASELINE_PATCH 37
 # https://ftp.gnu.org/gnu/bash/bash-5.2-patches/?C=M;O=D
-ENV _BASH_LATEST_PATCH 15
+ENV _BASH_LATEST_PATCH 37
 # prefixed with "_" since "$BASH..." have meaning in Bash parlance
 
 RUN set -eux; \
@@ -24,6 +24,7 @@ RUN set -eux; \
 		libc-dev \
 		make \
 		ncurses-dev \
+		patch \
 		tar \
 	; \
 	\
@@ -60,12 +61,12 @@ RUN set -eux; \
 	rm -rf "$GNUPGHOME"; \
 	apk del --no-network .gpg-deps; \
 	\
-	mkdir -p /usr/src/bash; \
+	mkdir -p /usr/local/src/bash; \
 	tar \
 		--extract \
 		--file=bash.tar.gz \
 		--strip-components=1 \
-		--directory=/usr/src/bash \
+		--directory=/usr/local/src/bash \
 	; \
 	rm bash.tar.gz; \
 	\
@@ -73,7 +74,7 @@ RUN set -eux; \
 		apk add --no-cache --virtual .patch-deps patch; \
 		for p in bash-patches/*; do \
 			patch \
-				--directory=/usr/src/bash \
+				--directory=/usr/local/src/bash \
 				--input="$(readlink -f "$p")" \
 				--strip=0 \
 			; \
@@ -83,8 +84,12 @@ RUN set -eux; \
 		apk del --no-network .patch-deps; \
 	fi; \
 	\
-	cd /usr/src/bash; \
+	cd /usr/local/src/bash; \
 	gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)"; \
+# update "config.guess" and "config.sub" to get more aggressively inclusive architecture support
+	for f in config.guess config.sub; do \
+		wget -O "support/$f" "git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=$f;hb=HEAD"; \
+	done; \
 	./configure \
 		--build="$gnuArch" \
 		--enable-readline \
@@ -99,7 +104,7 @@ RUN set -eux; \
 	make -j "$(nproc)"; \
 	make install; \
 	cd /; \
-	rm -r /usr/src/bash; \
+	rm -r /usr/local/src/bash; \
 	\
 # delete a few installed bits for smaller image size
 	rm -rf \
