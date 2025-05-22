@@ -1,6 +1,6 @@
-From f1770b707425589c5693e68745b7d9e9b58b67e1 Mon Sep 17 00:00:00 2001
+From 9ff1d372261f78e10f957998cbf0ed4f0f523053 Mon Sep 17 00:00:00 2001
 From: liujie <liujie@loongson.cn>
-Date: Thu, 22 May 2025 10:27:28 +0800
+Date: Thu, 22 May 2025 10:44:20 +0800
 Subject: [PATCH] patch
 
 ---
@@ -13,7 +13,7 @@ Subject: [PATCH] patch
 
 diff --git a/Dockerfile.loong64 b/Dockerfile.loong64
 new file mode 100644
-index 0000000..9a4c330
+index 0000000..1dbda20
 --- /dev/null
 +++ b/Dockerfile.loong64
 @@ -0,0 +1,58 @@
@@ -64,7 +64,7 @@ index 0000000..9a4c330
 +COPY dist/bin/calico-node-${ARCH} /bin/calico-node
 +
 +# Copy in the filesystem - this contains felix, calico-bgp-daemon etc...
-+RUN rm -rf /etc/service 
++RUN rm -rf /etc/service && rm -rf /sbin && rm -rf /usr   
 +COPY filesystem/ /
 +
 +COPY --from=bpftool /bpftool /bin
