@@ -14,7 +14,7 @@ PATCH=0001-support-loongarch.patch
 default: image
 
 image: src/$(SOURCE)
-	$(MAKE) -C src/$(SOURCE) container
+	$(MAKE) -C src/$(SOURCE) container ARCH=loong64
 	docker tag gcr.io/k8s-staging-cpa/cluster-proportional-autoscaler-loong64:1.8.4-dirty $(IMAGE) 
 src/$(SOURCE):
 	git clone -b $(TAG) --depth=1 $(SOURCE_URL) $@
