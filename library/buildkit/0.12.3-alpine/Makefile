@@ -16,12 +16,12 @@ src:
 	git clone --depth 1 -b loong64-0.12.3-runc-1.3.0 $(GIT_URL) src
 
 image: src
-        cd src && make image
+	cd src && make image
 push: src
-        cd src && make push
-        docker tag lcr.loongnix.cn/library/buildkit:0.12.3-alpine3.21-runc-1.3.0 $(IMAGE)
-        docker push $(IMAGE)
-        docker tag $(IMAGE) $(LATEST_IMAGE)
-        docker push $(LATEST_IMAGE)
+	cd src && make push
+	docker tag lcr.loongnix.cn/library/buildkit:0.12.3-alpine3.21-runc-1.3.0 $(IMAGE)
+	docker push $(IMAGE)
+	docker tag $(IMAGE) $(LATEST_IMAGE)
+	docker push $(LATEST_IMAGE)
 clean:
 	rm -rf src

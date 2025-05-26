@@ -1,0 +1,419 @@
+diff --git a/build/build_loong64.sh b/build/build_loong64.sh
+new file mode 100755
+index 0000000..646eaa5
+--- /dev/null
++++ b/build/build_loong64.sh
+@@ -0,0 +1,12 @@
++rm -f internal/core/runner/python/python.so                                                                                                                                              
++rm -f internal/core/runner/nodejs/nodejs.so
++rm -f /tmp/sandbox-python/python.so
++rm -f /tmp/sandbox-nodejs/nodejs.so
++echo "Building Python lib"
++CGO_ENABLED=1 GOOS=linux GOARCH=loong64 go build -o internal/core/runner/python/python.so -buildmode=c-shared -ldflags="-s -w" cmd/lib/python/main.go &&
++echo "Building Nodejs lib" &&
++CGO_ENABLED=1 GOOS=linux GOARCH=loong64 go build -o internal/core/runner/nodejs/nodejs.so -buildmode=c-shared -ldflags="-s -w" cmd/lib/nodejs/main.go &&
++echo "Building main" &&
++GOOS=linux GOARCH=loong64 go build -o main -ldflags="-s -w" cmd/server/main.go
++echo "Building env"
++GOOS=linux GOARCH=loong64 go build -o env -ldflags="-s -w" cmd/dependencies/init.go
+diff --git a/docker/amd64-test/dockerfile b/docker/amd64-test/dockerfile
+index da4260c..0b21b78 100644
+--- a/docker/amd64-test/dockerfile
++++ b/docker/amd64-test/dockerfile
+@@ -25,8 +25,8 @@ RUN echo "deb http://deb.debian.org/debian testing main" > /etc/apt/sources.list
+        xz-utils \
+        zlib1g=1:1.3.dfsg+really1.3.1-1 \
+        expat=2.6.3-1 \
+-       perl=5.38.2-5 \
+-       libsqlite3-0=3.46.0-1 \
++       perl=5.40.0-6 \
++       libsqlite3-0=3.46.1-1 \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
+ 
+diff --git a/docker/amd64/dockerfile b/docker/amd64/dockerfile
+index b217e0a..0923039 100644
+--- a/docker/amd64/dockerfile
++++ b/docker/amd64/dockerfile
+@@ -12,8 +12,8 @@ RUN echo "deb http://deb.debian.org/debian testing main" > /etc/apt/sources.list
+        xz-utils \
+        zlib1g=1:1.3.dfsg+really1.3.1-1 \
+        expat=2.6.3-1 \
+-       perl=5.38.2-5 \
+-       libsqlite3-0=3.46.0-1 \
++       perl=5.40.0-6 \
++       libsqlite3-0=3.46.1-1 \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
+ 
+diff --git a/docker/arm64-test/dockerfile b/docker/arm64-test/dockerfile
+index 7ebd4b6..bb0ada5 100644
+--- a/docker/arm64-test/dockerfile
++++ b/docker/arm64-test/dockerfile
+@@ -25,8 +25,8 @@ RUN echo "deb http://deb.debian.org/debian testing main" > /etc/apt/sources.list
+        xz-utils \
+        zlib1g=1:1.3.dfsg+really1.3.1-1 \
+        expat=2.6.3-1 \
+-       perl=5.38.2-5 \
+-       libsqlite3-0=3.46.0-1 \
++       perl=5.40.0-6 \
++       libsqlite3-0=3.46.1-1 \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
+ 
+diff --git a/docker/arm64/dockerfile b/docker/arm64/dockerfile
+index cb98794..beb7531 100644
+--- a/docker/arm64/dockerfile
++++ b/docker/arm64/dockerfile
+@@ -12,8 +12,8 @@ RUN echo "deb http://deb.debian.org/debian testing main" > /etc/apt/sources.list
+        xz-utils \
+        zlib1g=1:1.3.dfsg+really1.3.1-1 \
+        expat=2.6.3-1 \
+-       perl=5.38.2-5 \
+-       libsqlite3-0=3.46.0-1 \
++       perl=5.40.0-6 \
++       libsqlite3-0=3.46.1-1 \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
+ 
+diff --git a/docker/loong64/dockerfile b/docker/loong64/dockerfile
+new file mode 100644
+index 0000000..bc2c6bf
+--- /dev/null
++++ b/docker/loong64/dockerfile
+@@ -0,0 +1,39 @@
++FROM lcr.loongnix.cn/library/python:3.10-sid
++
++# if you located in China, you can use aliyun mirror to speed up
++# && echo "deb http://mirrors.aliyun.com/debian testing main" > /etc/apt/sources.list
++ RUN echo "deb http://mirrors.aliyun.com/debian-ports sid main contrib non-free" > /etc/apt/sources.list && apt-get update \
++      && apt-get install -y --no-install-recommends \
++         pkg-config \
++         libseccomp-dev \
++         wget \
++         curl \
++		 xz-utils \
++         zlib1g\
++         expat \
++         perl\
++		 libsqlite3-0\
++      && apt-get clean \
++      && rm -rf /var/lib/apt/lists/*
++
++
++# copy main binary to /main
++COPY main /main
++# copy initial env
++COPY env /env
++
++# copy config file
++COPY conf/config.yaml /conf/config.yaml
++# copy python dependencies
++COPY dependencies/python-requirements.txt /dependencies/python-requirements.txt
++
++RUN chmod +x /main /env \
++    && pip3 install --no-cache-dir httpx==0.27.2 requests==2.32.3 jinja2==3.0.3 PySocks httpx[socks] \
++    && wget -O /opt/node-v20.16.0-linux-loong64.tar.xz https://unofficial-builds.nodejs.org/download/release/v20.16.0/node-v20.16.0-linux-loong64.tar.gz \
++	&& tar -xvf /opt/node-v20.16.0-linux-loong64.tar.xz -C /opt \
++    && ln -s /opt/node-v20.16.0-linux-loong64/bin/node /usr/local/bin/node \
++	&& rm -f /opt/node-v20.16.0-linux-loong64.tar.xz \
++    && /env \
++    && rm -f /env
++
++ENTRYPOINT ["/main"]
+diff --git a/docker/loong64_test/dockerfile b/docker/loong64_test/dockerfile
+new file mode 100644
+index 0000000..1f7b0ea
+--- /dev/null
++++ b/docker/loong64_test/dockerfile
+@@ -0,0 +1,58 @@
++FROM lcr.loongnix.cn/library/golang:1.23 AS builder 
++COPY . /app
++WORKDIR /app
++
++# if you located in China, you can use aliyun mirror to speed up
++# && echo "deb http://mirrors.aliyun.com/debian testing main" > /etc/apt/sources.list
++# install dependencies and build binary
++RUN echo "deb http://mirrors.aliyun.com/debian-ports sid main contrib non-free" > /etc/apt/sources.list && go env -w GOPROXY='https://goproxy.cn,direct' &&  apt-get update && apt-get install -y --no-install-recommends pkg-config gcc libseccomp-dev && go mod tidy && bash ./build/build_loong64.sh
++FROM lcr.loongnix.cn/library/python:3.10-sid as tester
++
++# if you located in China, you can use aliyun mirror to speed up
++# && echo "deb http://mirrors.aliyun.com/debian testing main" > /etc/apt/sources.list
++
++# install system dependencies
++RUN echo "deb http://mirrors.aliyun.com/debian-ports sid main contrib non-free" > /etc/apt/sources.list && apt-get update \
++    && apt-get install -y --no-install-recommends \
++       pkg-config \
++       libseccomp-dev \
++       wget \
++       curl \
++       xz-utils \
++       zlib1g\
++       expat \
++       perl\
++       libsqlite3-0\
++    && apt-get clean \
++    && rm -rf /var/lib/apt/lists/*
++# workdir
++WORKDIR /app
++
++# checkout
++COPY . /app
++
++# copy binary and env from builder
++COPY --from=builder /app/internal/core/runner/python/python.so /app/internal/core/runner/python/python.so
++COPY --from=builder /app/internal/core/runner/nodejs/nodejs.so /app/internal/core/runner/nodejs/nodejs.so
++
++# copy test config file
++COPY conf/config.yaml /conf/config.yaml
++# copy python dependencies
++COPY dependencies/python-requirements.txt /dependencies/python-requirements.txt
++
++# install python dependencies
++RUN pip3 install --no-cache-dir httpx==0.27.2 requests==2.32.3 jinja2==3.0.3 PySocks httpx[socks]
++# install node
++RUN wget -O /opt/node-v20.16.0-linux-loong64.tar.xz https://unofficial-builds.nodejs.org/download/release/v20.16.0/node-v20.16.0-linux-loong64.tar.gz \
++	&& tar -xvf /opt/node-v20.16.0-linux-loong64.tar.xz -C /opt \
++	&& ln -s /opt/node-v20.16.0-linux-loong64/bin/node /usr/local/bin/node \
++	&& rm -f /opt/node-v20.16.0-linux-loong64.tar.xz 
++
++# install golang 1.21
++RUN wget -c https://golang.google.cn/dl/go1.23.1.linux-loong64.tar.gz \
++    && tar -C /usr/local -xzf go1.23.1.linux-loong64.tar.gz \
++    && ln -s /usr/local/go/bin/go /usr/local/bin/go \
++    && rm -f go1.23.1.linux-loong64.tar.gz
++
++# run test
++RUN go test -timeout 120s -v ./tests/integration_tests/...
+diff --git a/go.mod b/go.mod
+index 155007d..7e7b268 100644
+--- a/go.mod
++++ b/go.mod
+@@ -29,9 +29,9 @@ require (
+ 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+ 	github.com/ugorji/go/codec v1.2.12 // indirect
+ 	golang.org/x/arch v0.7.0 // indirect
+-	golang.org/x/crypto v0.18.0 // indirect
+-	golang.org/x/net v0.20.0 // indirect
+-	golang.org/x/sys v0.16.0 // indirect
++	golang.org/x/crypto v0.21.0 // indirect
++	golang.org/x/net v0.23.0 // indirect
++	golang.org/x/sys v0.18.0 // indirect
+ 	golang.org/x/text v0.14.0 // indirect
+-	google.golang.org/protobuf v1.32.0 // indirect
++	google.golang.org/protobuf v1.33.0 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index 983589d..363c440 100644
+--- a/go.sum
++++ b/go.sum
+@@ -69,19 +69,19 @@ github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZ
+ golang.org/x/arch v0.0.0-20210923205945-b76863e36670/go.mod h1:5om86z9Hs0C8fWVUuoMHwpExlXzs5Tkyp9hOrfG7pp8=
+ golang.org/x/arch v0.7.0 h1:pskyeJh/3AmoQ8CPE95vxHLqp1G1GfGNXTmcl9NEKTc=
+ golang.org/x/arch v0.7.0/go.mod h1:FEVrYAQjsQXMVJ1nsMoVVXPZg6p2JE2mx8psSWTDQys=
+-golang.org/x/crypto v0.18.0 h1:PGVlW0xEltQnzFZ55hkuX5+KLyrMYhHld1YHO4AKcdc=
+-golang.org/x/crypto v0.18.0/go.mod h1:R0j02AL6hcrfOiy9T4ZYp/rcWeMxM3L6QYxlOuEG1mg=
+-golang.org/x/net v0.20.0 h1:aCL9BSgETF1k+blQaYUBx9hJ9LOGP3gAVemcZlf1Kpo=
+-golang.org/x/net v0.20.0/go.mod h1:z8BVo6PvndSri0LbOE3hAn0apkU+1YvI6E70E9jsnvY=
++golang.org/x/crypto v0.21.0 h1:X31++rzVUdKhX5sWmSOFZxx8UW/ldWx55cbf08iNAMA=
++golang.org/x/crypto v0.21.0/go.mod h1:0BP7YvVV9gBbVKyeTG0Gyn+gZm94bibOW5BjDEYAOMs=
++golang.org/x/net v0.23.0 h1:7EYJ93RZ9vYSZAIb2x3lnuvqO5zneoD6IvWjuhfxjTs=
++golang.org/x/net v0.23.0/go.mod h1:JKghWKKOSdJwpW2GEx0Ja7fmaKnMsbu+MWVZTokSYmg=
+ golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+ golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+-golang.org/x/sys v0.16.0 h1:xWw16ngr6ZMtmxDyKyIgsE93KNKz5HKmMa3b8ALHidU=
+-golang.org/x/sys v0.16.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
++golang.org/x/sys v0.18.0 h1:DBdB3niSjOA/O0blCZBqDefyWNYveAYMNF1Wum0DYQ4=
++golang.org/x/sys v0.18.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+ golang.org/x/text v0.14.0 h1:ScX5w1eTa3QqT8oi6+ziP7dTV1S2+ALU0bI+0zXKWiQ=
+ golang.org/x/text v0.14.0/go.mod h1:18ZOQIKpY8NJVqYksKHtTdi31H5itFRjB5/qKTNYzSU=
+ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
+-google.golang.org/protobuf v1.32.0 h1:pPC6BG5ex8PDFnkbrGU3EixyhKcQ2aDuBS36lqK/C7I=
+-google.golang.org/protobuf v1.32.0/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
++google.golang.org/protobuf v1.33.0 h1:uNO2rsAINq/JlFpSdYEKIZ0uKD/R9cpdv0T+yoGwGmI=
++google.golang.org/protobuf v1.33.0/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+diff --git a/install.sh b/install.sh
+index 948616f..74576f2 100755
+--- a/install.sh
++++ b/install.sh
+@@ -13,7 +13,9 @@ elif [ -f /etc/alpine-release ]; then
+ # check if centos
+ elif [ -f /etc/centos-release ]; then
+     sudo yum install pkgconfig gcc libseccomp-devel
++elif cat /etc/os-release | grep -i "aosc" > /dev/null 2>&1 ; then
++	sudo oma install pkg-config gcc libseccomp
+ else
+     echo "Unsupported distribution"
+     exit 1
+-fi
+\ No newline at end of file
++fi
+diff --git a/internal/core/lib/seccomp_syscall_loong64.go b/internal/core/lib/seccomp_syscall_loong64.go
+new file mode 100644
+index 0000000..e0b17e4
+--- /dev/null
++++ b/internal/core/lib/seccomp_syscall_loong64.go
+@@ -0,0 +1,8 @@
++//go:build linux && loong64  
++package lib 
++
++import "syscall"
++
++const (
++    SYS_SECCOMP = syscall.SYS_SECCOMP
++)  
+diff --git a/internal/static/config_default_loong64.go b/internal/static/config_default_loong64.go
+new file mode 100644
+index 0000000..96006df
+--- /dev/null
++++ b/internal/static/config_default_loong64.go
+@@ -0,0 +1,20 @@
++//go:build linux && loong64
++
++package static
++
++var DEFAULT_PYTHON_LIB_REQUIREMENTS = []string{
++	"/usr/local/lib/python3.10",
++    "/usr/lib/python3.10",
++    "/usr/lib/python3",
++	"/usr/lib/loongarch64-linux-gnu",
++	"/etc/ssl/certs/ca-certificates.crt",
++    "/etc/nsswitch.conf",
++    "/etc/hosts",
++    "/etc/resolv.conf",
++    "/run/systemd/resolve/stub-resolv.conf",
++    "/run/resolvconf/resolv.conf",
++    "/etc/localtime",
++    "/usr/share/zoneinfo",
++    "/etc/timezone",
++}
++
+diff --git a/internal/static/nodejs_syscall/syscalls_loong64.go b/internal/static/nodejs_syscall/syscalls_loong64.go
+new file mode 100644
+index 0000000..6540e89
+--- /dev/null
++++ b/internal/static/nodejs_syscall/syscalls_loong64.go
+@@ -0,0 +1,45 @@
++//go:build linux && loong64
++
++package nodejs_syscall
++
++import "syscall"
++
++var ALLOW_SYSCALLS = []int{
++    // file
++    syscall.SYS_CLOSE, syscall.SYS_WRITE, syscall.SYS_READ,
++    syscall.SYS_STATX, syscall.SYS_FCNTL,
++    syscall.SYS_READLINKAT, syscall.SYS_OPENAT,
++
++    // process                                                                                                                                                                               
++    syscall.SYS_GETPID, syscall.SYS_TGKILL, syscall.SYS_FUTEX, syscall.SYS_IOCTL,
++    syscall.SYS_EXIT, syscall.SYS_EXIT_GROUP,
++    syscall.SYS_SET_ROBUST_LIST, syscall.SYS_NANOSLEEP, syscall.SYS_SCHED_GETAFFINITY,
++    syscall.SYS_SCHED_YIELD,
++
++    // memory
++    syscall.SYS_RT_SIGPROCMASK, syscall.SYS_SIGALTSTACK, syscall.SYS_RT_SIGACTION,
++    syscall.SYS_MMAP, syscall.SYS_MUNMAP, syscall.SYS_MADVISE, syscall.SYS_MPROTECT,
++    syscall.SYS_RT_SIGRETURN, syscall.SYS_BRK,
++
++    //user/group
++    syscall.SYS_SETUID, syscall.SYS_SETGID, syscall.SYS_GETTID,
++    syscall.SYS_GETUID, syscall.SYS_GETGID,
++
++    // epoll
++    syscall.SYS_EPOLL_CTL, syscall.SYS_EPOLL_PWAIT,
++}
++
++var ALLOW_ERROR_SYSCALLS = []int{
++    syscall.SYS_CLONE, 293,
++}
++
++var ALLOW_NETWORK_SYSCALLS = []int{
++    syscall.SYS_SOCKET, syscall.SYS_CONNECT, syscall.SYS_BIND, syscall.SYS_LISTEN, syscall.SYS_ACCEPT,
++    syscall.SYS_SENDTO, syscall.SYS_RECVFROM,
++    syscall.SYS_GETSOCKNAME, syscall.SYS_SETSOCKOPT, syscall.SYS_GETSOCKOPT,
++    syscall.SYS_SENDMMSG, syscall.SYS_RECVMSG,
++    syscall.SYS_GETPEERNAME, syscall.SYS_PPOLL, syscall.SYS_UNAME,
++    syscall.SYS_STATX, syscall.SYS_LSEEK,
++    syscall.SYS_FSTATFS,
++}
++
+diff --git a/internal/static/python_syscall/syscalls_loong64.go b/internal/static/python_syscall/syscalls_loong64.go
+new file mode 100644
+index 0000000..2b3e8bb
+--- /dev/null
++++ b/internal/static/python_syscall/syscalls_loong64.go
+@@ -0,0 +1,57 @@
++//go:build linux && loong64
++
++package python_syscall
++
++import (
++        "syscall"
++)
++
++const (
++        SYS_RSEQ = 293
++)
++
++var ALLOW_SYSCALLS = []int{
++        // file io
++        syscall.SYS_WRITE, syscall.SYS_CLOSE, syscall.SYS_OPENAT, syscall.SYS_READ, syscall.SYS_LSEEK, syscall.SYS_GETDENTS64,
++
++        // thread
++        syscall.SYS_FUTEX,
++
++        // memory
++        syscall.SYS_MMAP, syscall.SYS_BRK, syscall.SYS_MPROTECT, syscall.SYS_MUNMAP, syscall.SYS_RT_SIGRETURN, syscall.SYS_RT_SIGPROCMASK,
++        syscall.SYS_SIGALTSTACK, syscall.SYS_MREMAP,
++
++        // user/group
++        syscall.SYS_SETUID, syscall.SYS_SETGID, syscall.SYS_GETUID,
++
++        // process
++        syscall.SYS_GETPID, syscall.SYS_GETPPID, syscall.SYS_GETTID,
++        syscall.SYS_EXIT, syscall.SYS_EXIT_GROUP,
++        syscall.SYS_TGKILL, syscall.SYS_RT_SIGACTION,
++        syscall.SYS_IOCTL, syscall.SYS_SCHED_YIELD,
++        syscall.SYS_GET_ROBUST_LIST, syscall.SYS_SET_ROBUST_LIST,
++        SYS_RSEQ,
++
++        // time
++        syscall.SYS_EPOLL_CREATE1,
++        syscall.SYS_CLOCK_GETTIME, syscall.SYS_GETTIMEOFDAY, syscall.SYS_NANOSLEEP,
++        syscall.SYS_EPOLL_CTL, syscall.SYS_CLOCK_NANOSLEEP, syscall.SYS_PSELECT6,
++        syscall.SYS_TIMERFD_CREATE, syscall.SYS_TIMERFD_SETTIME, syscall.SYS_TIMERFD_GETTIME,
++
++        // get random
++        syscall.SYS_GETRANDOM,
++}
++
++var ALLOW_ERROR_SYSCALLS = []int{
++        syscall.SYS_CLONE,
++        syscall.SYS_MKDIRAT,
++}
++
++var ALLOW_NETWORK_SYSCALLS = []int{
++        syscall.SYS_SOCKET, syscall.SYS_CONNECT, syscall.SYS_BIND, syscall.SYS_LISTEN, syscall.SYS_ACCEPT, syscall.SYS_SENDTO,
++        syscall.SYS_RECVFROM, syscall.SYS_RECVMSG, syscall.SYS_GETSOCKOPT,
++        syscall.SYS_GETSOCKNAME, syscall.SYS_GETPEERNAME, syscall.SYS_SETSOCKOPT,
++        syscall.SYS_PPOLL, syscall.SYS_UNAME, syscall.SYS_SENDMMSG,
++        syscall.SYS_STATX, syscall.SYS_FSTATFS, syscall.SYS_EPOLL_PWAIT,
++}
++
+diff --git a/tests/integration_tests/conf/config.yaml b/tests/integration_tests/conf/config.yaml
+index f30b53d..690f9e6 100644
+--- a/tests/integration_tests/conf/config.yaml
++++ b/tests/integration_tests/conf/config.yaml
+@@ -12,6 +12,7 @@ python_lib_path:
+   - "/usr/lib/python3"
+   - "/usr/lib/x86_64-linux-gnu"
+   - "/usr/lib/aarch64-linux-gnu"
++  - "/usr/lib/loongarch64-linux-gnu"
+   - "/etc/ssl/certs/ca-certificates.crt"
+   - "/etc/nsswitch.conf"
+   - "/etc/hosts"
