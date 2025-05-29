@@ -16,7 +16,7 @@ src:
 	git clone -b loong64-0.12.3 $(GIT_URL) $@
 
 image: src
-	cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3-debian -f Dockerfile .
+	cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3-debian -f Dockerfile   --build-arg https_proxy=$(https_proxy) --build-arg BUILDPLATFORM=linux/loong64 .
 	#cd src/ && docker buildx build -t lcr.loongnix.cn/library/buildkit:0.12.3 -f Dockerfile.static .
 push:
 	cd src/ && docker buildx build --load -t lcr.loongnix.cn/library/buildkit:0.12.3-debian -f Dockerfile . && docker push lcr.loongnix.cn/library/buildkit:0.12.3-debian
