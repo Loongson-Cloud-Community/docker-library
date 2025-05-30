@@ -1,4 +1,4 @@
-FROM lcr.loongnix.cn/library/alpine:3.19
+FROM lcr.loongnix.cn/library/alpine:3.21
 
 RUN apk --no-cache upgrade
 RUN apk add --no-cache ca-certificates wget
