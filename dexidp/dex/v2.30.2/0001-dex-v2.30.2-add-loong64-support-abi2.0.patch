@@ -1,0 +1,57 @@
+From 108acf0247beac6cfa92a3999e222c940e0103a6 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Fri, 30 May 2025 09:17:27 +0800
+Subject: [PATCH] dex v2.30.2 add loong64 support abi2.0
+
+---
+ Dockerfile | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 43b2d3ed..2f852fa2 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM golang:1.16.6-alpine3.14 AS builder
++FROM lcr.loongnix.cn/library/golang:1.21.5-alpine3.18 AS builder
+ 
+ WORKDIR /usr/local/src/dex
+ 
+@@ -10,17 +10,17 @@ ARG TARGETVARIANT=""
+ 
+ ENV GOOS=${TARGETOS} GOARCH=${TARGETARCH} GOARM=${TARGETVARIANT}
+ 
+-ARG GOPROXY
++ENV GOPROXY=https://goproxy.cn,direct
+ 
+ COPY go.mod go.sum ./
+ COPY api/v2/go.mod api/v2/go.sum ./api/v2/
+-RUN go mod download
++RUN go get -d  entgo.io/ent@v0.13.0 && go mod tidy && go mod download
+ 
+ COPY . .
+ 
+ RUN make release-binary
+ 
+-FROM alpine:3.14.0 AS gomplate
++FROM lcr.loongnix.cn/library/alpine:3.18 AS gomplate
+ 
+ ARG TARGETOS
+ ARG TARGETARCH
+@@ -29,11 +29,11 @@ ARG TARGETVARIANT
+ ENV GOMPLATE_VERSION=v3.9.0
+ 
+ RUN wget -O /usr/local/bin/gomplate \
+-    "https://github.com/hairyhenderson/gomplate/releases/download/${GOMPLATE_VERSION}/gomplate_${TARGETOS:-linux}-${TARGETARCH:-amd64}${TARGETVARIANT}" \
++    "https://github.com/Loongson-Cloud-Community/gomplate/releases/download/${GOMPLATE_VERSION}/gomplate_${TARGETOS:-linux}-${TARGETARCH:-amd64}${TARGETVARIANT}" \
+     && chmod +x /usr/local/bin/gomplate
+ 
+ 
+-FROM alpine:3.14.3
++FROM lcr.loongnix.cn/library/alpine:3.18
+ 
+ # Dex connectors, such as GitHub and Google logins require root certificates.
+ # Proper installations should manage those certificates, but it's a bad user
+-- 
+2.41.0
+
