@@ -1,0 +1,166 @@
+From 20b55ad966b284fe01715f1c02095779f3a9bae1 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Wed, 4 Jun 2025 14:15:30 +0800
+Subject: [PATCH] devops agent v4.2.0 add loong64 support
+
+---
+ base/Dockerfile | 78 +++++++++++++++++++++----------------------------
+ 1 file changed, 33 insertions(+), 45 deletions(-)
+
+diff --git a/base/Dockerfile b/base/Dockerfile
+index 8286f78..366f64d 100644
+--- a/base/Dockerfile
++++ b/base/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM ubuntu:24.04
++FROM lcr.loongnix.cn/library/debian:sid
+ 
+ ARG TARGETARCH
+ 
+@@ -40,7 +40,10 @@ RUN apt-get update && \
+     software-properties-common \
+     apt-transport-https \
+     fuse-overlayfs \
+-    openjdk-21-jdk
++    openjdk-21-jdk \
++    docker-cli \
++    docker-buildx \
++    docker-compose
+ 
+ ## Settings for Java
+ ENV JDK_HOME=/usr/lib/jvm/java-21-openjdk-${TARGETARCH}
+@@ -50,63 +53,47 @@ ENV PATH=$PATH:${JAVA_HOME}/bin
+ # Settings for python
+ RUN ln -fs $(which python3) /usr/bin/python && ln -fs $(which pip3) /usr/bin/pip
+ 
+-# Install docker CLI
+-RUN install -m 0755 -d /etc/apt/keyrings && \
+-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+-    chmod a+r /etc/apt/keyrings/docker.asc && \
+-    echo \
+-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+-    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+-    tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+-    apt-get update && \
+-    apt-get install -y docker-ce-cli docker-buildx-plugin docker-compose-plugin
+-
+ # Install helm
+-RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null && \
+-    apt-get install apt-transport-https --yes && \
+-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
+-    apt-get update && \
+-    apt-get install -y helm
++ENV HELM_VERSION=3.12.0
++
++RUN wget -O helm.zip https://cloud.loongnix.cn/releases/loongarch64/helm/helm/${HELM_VERSION}/helm-v${HELM_VERSION}-linux_loong64.zip && \
++    mkdir /opt/helm && \
++    unzip helm.zip -d /opt/helm && \
++    rm helm.zip && \
++    ln -fs /opt/helm/linux_loong64/helm /usr/local/bin/helm
+ 
+ # Install kubectl
+-RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+-    chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg && \
+-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list && \
+-    chmod 644 /etc/apt/sources.list.d/kubernetes.list && \
+-    apt-get update && \
+-    apt-get install -y kubectl
++ENV KUBECTL_VERSION=1.29.0
++
++RUN mkdir /opt/kubectl && \
++    wget -P /opt/kubectl https://cloud.loongnix.cn/releases/loongarch64/kubernetes/kubernetes/v${KUBECTL_VERSION}/kubectl && \
++    ln -fs /opt/kubectl/kubectl /usr/local/bin/kubectl
+ 
+ # Install kustomize
+-RUN cd /usr/local/bin && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
++RUN cd /usr/local/bin && wget https://cloud.loongnix.cn/releases/loongarch64/kubernetes-sigs/kustomize/5.3/kustomize-linux-loong64.tar.gz  && \
++    tar xf kustomize-linux-loong64.tar.gz && \
++    rm kustomize-linux-loong64.tar.gz
+ 
+ # Install Sonar Scanner CLI
+ ENV SONAR_SCANNER_VERSION=7.0.2.4839
+-RUN arch=$(dpkg --print-architecture) && \
+-    if [ $arch = "amd64" ]; then \
+-      TARGET_ARCH=linux-x64; \
+-    elif [ $arch = "arm64" ]; then \
+-      TARGET_ARCH=linux-aarch64; \
+-    else \
+-      echo "Unsupported architecture: $arch" && exit 1; \
+-    fi && \
+-    wget -O sonar_scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-${TARGET_ARCH}.zip && \
++RUN wget -O sonar_scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip && \
+     unzip sonar_scanner.zip -d /opt && \
+     rm sonar_scanner.zip && \
+-    mv /opt/sonar-scanner-${SONAR_SCANNER_VERSION}-${TARGET_ARCH} /opt/sonar-scanner && \
++    mv /opt/sonar-scanner-${SONAR_SCANNER_VERSION} /opt/sonar-scanner && \
+     ln -fs /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
+ 
++
+ # Install ks (Kubesphere CLI)
+-RUN curl -fL https://github.com/kubesphere-sigs/ks/releases/download/v0.0.73/ks-linux-$(dpkg --print-architecture).tar.gz | tar xzv && \
++RUN curl -fL  https://cloud.loongnix.cn/releases/loongarch64/kubesphere-sigs/ks/0.0.73/ks-linux-loong64.tar.gz  | tar xzv && \
+     mv ks /usr/local/bin/
+ 
+ # Install golang
+-ENV GOVERSION=1.24
++ENV GOVERSION=1.23
+ ENV GOROOT=/usr/lib/go-${GOVERSION}
+ ENV GOPATH=$JENKINS_HOME/go
+ ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+ RUN mkdir -p $GOPATH/bin && mkdir -p $GOPATH/src && mkdir -p $GOPATH/pkg
+-RUN add-apt-repository -y ppa:longsleep/golang-backports && \
+-    apt-get update && \
++RUN apt-get update && \
+     apt-get install -y golang-${GOVERSION}-go
+ 
+ RUN go env -w GOPATH=$JENKINS_HOME/go
+@@ -115,14 +102,14 @@ RUN go env -w GOPATH=$JENKINS_HOME/go
+ RUN curl -s "https://get.sdkman.io" | bash
+ 
+ # Install gradle
+-ENV GRADLE_VERSION=8.14
++ENV GRADLE_VERSION=8.13
+ RUN bash -c "source /root/.sdkman/bin/sdkman-init.sh && sdk install gradle ${GRADLE_VERSION}"
+ 
+ RUN ln -fs /root/.sdkman/candidates/gradle/current/bin/gradle /usr/local/bin/gradle
+ 
+ # Install Maven
+ ENV MAVEN_VERSION=3.9.9
+-RUN curl -f -L https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar -C /opt -xzv && \
++RUN curl -f -L https://mirrors.tuna.tsinghua.edu.cn/apache/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz | tar -C /opt -xzv && \
+     mv /opt/apache-maven-${MAVEN_VERSION} /opt/apache-maven
+ ENV M2_HOME=/opt/apache-maven
+ ENV maven.home=$M2_HOME
+@@ -131,7 +118,7 @@ ENV PATH=$PATH:$M2
+ 
+ # Install ant
+ ENV ANT_VERSION=1.10.15
+-RUN wget -q https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz && \
++RUN wget -q https://mirrors.tuna.tsinghua.edu.cn/apache/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz && \
+     tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz && \
+     mv apache-ant-${ANT_VERSION} /opt/ant && \
+     rm apache-ant-${ANT_VERSION}-bin.tar.gz
+@@ -139,10 +126,11 @@ ENV ANT_HOME=/opt/ant
+ ENV PATH=${PATH}:${ANT_HOME}/bin
+ 
+ # Set up NodeSource repository for Node.js
+-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
++# RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+ 
+ # Install Node.js
+-RUN apt-get install -y nodejs
++# Installing nodejs that comes with debian13
++RUN apt update && apt install -y nodejs npm
+ 
+ # Install Yarn and other packages
+ RUN npm install --global --force yarn watch-cli typescript
+@@ -155,4 +143,4 @@ RUN apt-get clean && \
+ WORKDIR /home/jenkins
+ 
+ # Default command
+-ENTRYPOINT ["/bin/bash"]
+\ No newline at end of file
++ENTRYPOINT ["/bin/bash"]
+-- 
+2.41.0
+
