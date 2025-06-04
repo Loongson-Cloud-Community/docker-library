@@ -1,0 +1,106 @@
+From 95f43bbb80c708ac73c165066295cb4e7ffbfcb9 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Wed, 4 Jun 2025 09:49:04 +0800
+Subject: [PATCH] add loong64 support abi2.0
+
+---
+ build/ks-apiserver/Dockerfile          | 5 +++--
+ build/ks-controller-manager/Dockerfile | 9 +++++----
+ hack/docker_build.sh                   | 2 +-
+ hack/lib/util.sh                       | 5 ++++-
+ 4 files changed, 13 insertions(+), 8 deletions(-)
+
+diff --git a/build/ks-apiserver/Dockerfile b/build/ks-apiserver/Dockerfile
+index b6d4b11ae..c1efdc652 100644
+--- a/build/ks-apiserver/Dockerfile
++++ b/build/ks-apiserver/Dockerfile
+@@ -1,6 +1,7 @@
+ # Build
+-FROM golang:1.23.7 AS build_context
++FROM lcr.loongnix.cn/library/golang:1.23 AS build_context
+ 
++ENV GOPROXY=https://goproxy.cn
+ ENV OUTDIR=/out
+ RUN mkdir -p ${OUTDIR}/usr/local/bin/
+ 
+@@ -14,7 +15,7 @@ RUN mv /workspace/bin/cmd/ks-apiserver ${OUTDIR}/usr/local/bin/
+ # Final image
+ #############
+ 
+-FROM alpine:3.21.3
++FROM lcr.loongnix.cn/library/alpine:3.21.0
+ 
+ COPY --from=build_context /out/ /
+ 
+diff --git a/build/ks-controller-manager/Dockerfile b/build/ks-controller-manager/Dockerfile
+index 47261281e..df04585f0 100644
+--- a/build/ks-controller-manager/Dockerfile
++++ b/build/ks-controller-manager/Dockerfile
+@@ -1,5 +1,5 @@
+ # Download dependencies
+-FROM alpine:3.21.3 AS base_os_context
++FROM lcr.loongnix.cn/library/alpine:3.21.0 AS base_os_context
+ 
+ RUN apk add --no-cache ca-certificates curl
+ 
+@@ -8,15 +8,16 @@ RUN mkdir -p ${OUTDIR}/usr/local/bin/
+ 
+ ARG TELEMETRY_VERSION=1.0.2
+ ARG TARGETARCH
+-RUN curl -LO https://github.com/kubesphere/telemetry/releases/download/v${TELEMETRY_VERSION}/telemetry_${TELEMETRY_VERSION}_linux_${TARGETARCH}.tar.gz && \
++RUN curl -LO https://github.com/Loongson-Cloud-Community/telemetry/releases/download/v${TELEMETRY_VERSION}/telemetry_${TELEMETRY_VERSION}_linux_${TARGETARCH}.tar.gz && \
+     tar -zxvf telemetry_${TELEMETRY_VERSION}_linux_${TARGETARCH}.tar.gz -C ${OUTDIR}/usr/local/bin/ telemetry
+ 
+ # Add KS Core Helm Chart
+ COPY config/ks-core ${OUTDIR}/var/helm-charts/ks-core
+ 
+ # Build
+-FROM golang:1.23.7 AS build_context
++FROM lcr.loongnix.cn/library/golang:1.23 AS build_context
+ 
++ENV GOPROXY=https://goproxy.cn
+ ENV OUTDIR=/out
+ RUN mkdir -p ${OUTDIR}/usr/local/bin/
+ 
+@@ -27,7 +28,7 @@ RUN make ks-controller-manager
+ RUN mv /workspace/bin/cmd/controller-manager ${OUTDIR}/usr/local/bin/
+ 
+ # Final Image
+-FROM alpine:3.21.3
++FROM lcr.loongnix.cn/library/alpine:3.21.0
+ 
+ COPY --from=base_os_context /out/ /
+ COPY --from=build_context /out/ /
+diff --git a/hack/docker_build.sh b/hack/docker_build.sh
+index 29a86fd8f..2fdfe45f9 100755
+--- a/hack/docker_build.sh
++++ b/hack/docker_build.sh
+@@ -7,7 +7,7 @@ KUBE_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+ source "${KUBE_ROOT}/hack/lib/init.sh"
+ 
+ # push to kubesphere with default latest tag
+-TAG=${TAG:-latest}
++TAG=${TAG:-v4.1.3}
+ REPO=${REPO:-kubesphere}
+ 
+ # If set, just building, no pushing
+diff --git a/hack/lib/util.sh b/hack/lib/util.sh
+index 2bb1a14ba..3bb2cfca5 100755
+--- a/hack/lib/util.sh
++++ b/hack/lib/util.sh
+@@ -156,8 +156,11 @@ kube::util::host_arch() {
+     ppc64le*)
+       host_arch=ppc64le
+       ;;
++    loongarch64*)
++      host_arch=loong64
++      ;;
+     *)
+-      kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le."
++      kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x, ppc64le or loong64."
+       exit 1
+       ;;
+   esac
+-- 
+2.41.0
+
