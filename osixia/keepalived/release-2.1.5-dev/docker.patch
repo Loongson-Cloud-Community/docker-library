@@ -1,0 +1,68 @@
+diff --git a/Makefile b/Makefile
+index 93f1da6..d3e58f9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,5 @@
+-NAME = osixia/keepalived
+-VERSION = 2.1.5
++NAME = lcr.loongnix.cn/osixia/keepalived
++VERSION = release-2.1.5-dev
+ 
+ .PHONY: build build-nocache test tag-latest push push-latest release git-tag-version
+ 
+diff --git a/image/Dockerfile b/image/Dockerfile
+index 094be35..df4ebb9 100644
+--- a/image/Dockerfile
++++ b/image/Dockerfile
+@@ -1,10 +1,9 @@
+ # Use osixia/light-baseimage
+ # sources: https://github.com/osixia/docker-light-baseimage
+-FROM osixia/light-baseimage:alpine-0.1.6
+-
++FROM lcr.loongnix.cn/library/alpine:3
+ # Keepalived version
+ ARG KEEPALIVED_VERSION=2.1.5
+-
++COPY net.patch /
+ # Download, build and install Keepalived
+ RUN apk --no-cache add \
+     autoconf \
+@@ -18,6 +17,7 @@ RUN apk --no-cache add \
+     libnfnetlink-dev \
+     libnl3 \
+     libnl3-dev \
++    git \
+     make \
+     musl-dev \
+     openssl \
+@@ -25,7 +25,7 @@ RUN apk --no-cache add \
+     && curl -o keepalived.tar.gz -SL http://keepalived.org/software/keepalived-${KEEPALIVED_VERSION}.tar.gz \
+     && mkdir -p /container/keepalived-sources \
+     && tar -xzf keepalived.tar.gz --strip 1 -C /container/keepalived-sources \
+-    && cd container/keepalived-sources \
++    && cd container/keepalived-sources && git apply ../../net.patch \
+     && ./configure --disable-dynamic-linking \
+     && make && make install \
+     && cd - && mkdir -p /etc/keepalived \
+@@ -42,12 +42,19 @@ RUN apk --no-cache add \
+     musl-dev \
+     openssl-dev
+ 
++RUN apk add python3 bash iptables-dev
++RUN python3 --version
+ # Add service directory to /container/service
+ ADD service /container/service
+-
++RUN ls /container/service/keepalived
+ # Use baseimage install-service script
+ # https://github.com/osixia/docker-light-baseimage/blob/master/image/tool/install-service
+-RUN /container/tool/install-service
++COPY install-service /container/tool/
++RUN chmod +x /container/tool/install-service
++RUN ls /container/tool/install-service && python3 /container/tool/install-service
+ 
+ # Add default env variables
+ ADD environment /container/environment/99-default
++ENTRYPOINT ["keepalived"]
++CMD ["--help"]
++
