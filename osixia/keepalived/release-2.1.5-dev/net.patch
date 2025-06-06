@@ -1,0 +1,52 @@
+diff --git a/keepalived/check/check_ping.c b/keepalived/check/check_ping.c
+index 69328bd..bd35a9a 100644
+--- a/keepalived/check/check_ping.c
++++ b/keepalived/check/check_ping.c
+@@ -185,7 +185,7 @@ ping_it(int fd, conn_opts_t* co)
+ 	icmp_hdr->type = ICMP_ECHO;
+ 	icmp_hdr->un.echo.sequence = seq_no++;
+ 
+-	if (sendto(fd, send_buf, sizeof(send_buf), 0, (struct sockaddr*)&co->dst, sizeof(struct sockaddr)) < 0) {
++	if (sendto(fd, send_buf, sizeof(send_buf), 0, (const struct sockaddr*)&co->dst, sizeof(struct sockaddr)) < 0) {
+ 		log_message(LOG_INFO, "send ICMP packet fail");
+ 		return connect_error;
+ 	}
+@@ -234,7 +234,7 @@ ping6_it(int fd, conn_opts_t* co)
+ 	icmp6_hdr->icmp6_type = ICMP6_ECHO_REQUEST;
+ 	icmp6_hdr->icmp6_seq = seq_no++;
+ 
+-	if (sendto(fd, send_buf, sizeof(send_buf), 0, (struct sockaddr_in6 *)&co->dst, sizeof(struct sockaddr_in6)) < 0) {
++	if (sendto(fd, send_buf, sizeof(send_buf), 0, (const struct sockaddr *)&co->dst, sizeof(struct sockaddr_in6)) < 0) {
+ 		log_message(LOG_INFO, "send ICMPv6 packet fail - errno %d", errno);
+ 		return connect_error;
+ 	}
+diff --git a/keepalived/core/layer4.c b/keepalived/core/layer4.c
+index d5e98a1..f8d24a6 100644
+--- a/keepalived/core/layer4.c
++++ b/keepalived/core/layer4.c
+@@ -27,13 +27,13 @@
+ #include <errno.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+-#include <linux/icmp.h>
+-#include <linux/icmpv6.h>
++#include <netinet/icmp6.h>
++#include <netinet/ip_icmp.h>
++#include <netinet/in.h>
+ #ifdef ERRQUEUE_NEEDS_SYS_TIME
+ #include <sys/time.h>
+ #endif
+ #include <linux/errqueue.h>
+-#include <netinet/in.h>
+ 
+ #include "layer4.h"
+ #include "logger.h"
+@@ -45,6 +45,8 @@
+ #include "utils.h"
+ 
+ // #define ICMP_DEBUG	1
++#define ICMPV6_DEST_UNREACH 1
++
+ 
+ #ifdef _WITH_LVS_
+ #define UDP_BUFSIZE	32
