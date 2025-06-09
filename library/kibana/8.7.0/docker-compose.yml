@@ -1,0 +1,14 @@
+version: "3.3"  # 确保你的 Docker Compose 版本支持这个语法
+
+services:
+  kibana:
+    image: lcr.loongnix.cn/library/kibana:8.7.0
+    container_name: kibana
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - "5601:5601"
+

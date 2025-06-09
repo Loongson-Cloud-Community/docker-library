@@ -1,0 +1,57 @@
+From fc2c55e6dd21ed009bc41a84a8cf81dc525aa817 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 3 Jun 2025 15:51:24 +0800
+Subject: [PATCH] build on loongarch
+
+---
+ Dockerfile | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 43b2d3ed..e2811c3a 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM golang:1.16.6-alpine3.14 AS builder
++FROM lcr.loongnix.cn/library/golang:1.21-alpine AS builder
+ 
+ WORKDIR /usr/local/src/dex
+ 
+@@ -10,17 +10,16 @@ ARG TARGETVARIANT=""
+ 
+ ENV GOOS=${TARGETOS} GOARCH=${TARGETARCH} GOARM=${TARGETVARIANT}
+ 
+-ARG GOPROXY
++ENV GOPROXY=https://goproxy.cn
+ 
+ COPY go.mod go.sum ./
+ COPY api/v2/go.mod api/v2/go.sum ./api/v2/
+-RUN go mod download
+-
+ COPY . .
+ 
++RUN go get -d entgo.io/ent@v0.13.0 && go get -d github.com/mattn/go-sqlite3@v1.14.28 && go mod tidy && go mod download
+ RUN make release-binary
+ 
+-FROM alpine:3.14.0 AS gomplate
++FROM lcr.loongnix.cn/library/alpine:3.21 AS gomplate
+ 
+ ARG TARGETOS
+ ARG TARGETARCH
+@@ -29,11 +28,11 @@ ARG TARGETVARIANT
+ ENV GOMPLATE_VERSION=v3.9.0
+ 
+ RUN wget -O /usr/local/bin/gomplate \
+-    "https://github.com/hairyhenderson/gomplate/releases/download/${GOMPLATE_VERSION}/gomplate_${TARGETOS:-linux}-${TARGETARCH:-amd64}${TARGETVARIANT}" \
++    "https://github.com/Loongson-Cloud-Community/gomplate/releases/download/${GOMPLATE_VERSION}/gomplate_${TARGETOS:-linux}-${TARGETARCH:-amd64}${TARGETVARIANT}" \
+     && chmod +x /usr/local/bin/gomplate
+ 
+ 
+-FROM alpine:3.14.3
++FROM lcr.loongnix.cn/library/alpine:3.21
+ 
+ # Dex connectors, such as GitHub and Google logins require root certificates.
+ # Proper installations should manage those certificates, but it's a bad user
+-- 
+2.41.0
+
