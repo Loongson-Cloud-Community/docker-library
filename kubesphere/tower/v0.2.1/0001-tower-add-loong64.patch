@@ -1,0 +1,77 @@
+From 84ed37cd3fa252b60480cd6eec995dd35a97ace4 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Mon, 23 Jun 2025 15:41:19 +0800
+Subject: [PATCH] tower add loong64
+
+---
+ Dockerfile | 12 ++++++++----
+ Makefile   |  4 ++--
+ 2 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index d701635..0f3aecd 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,6 +1,7 @@
+ # Build the manager binary
+-FROM golang:1.16 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ 
++ENV GOPROXY=https://goproxy.cn
+ WORKDIR /workspace
+ # Copy the Go Modules manifests
+ COPY go.mod go.mod
+@@ -9,9 +10,10 @@ COPY go.sum go.sum
+ # and so that source changes don't invalidate our downloaded layer
+ 
+ # In case of network error while building images manually
+-ENV GOPROXY=https://goproxy.io
++#ENV GOPROXY=https://goproxy.cn
+ 
+-RUN go mod download
++#RUN go get -d golang.org/x/sys@latest && go mod tidy
++#RUN go mod download && go mod vendor
+ 
+ # Copy the go source
+ COPY cmd/ cmd/
+@@ -19,13 +21,15 @@ COPY pkg/ pkg/
+ COPY certs/ certs/
+ COPY vendor/ vendor/
+ 
++RUN go get -d golang.org/x/sys@v0.3.0 && go mod tidy
++RUN go mod download && go mod vendor
+ # Build
+ RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o proxy cmd/proxy/main.go
+ RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o agent cmd/agent/main.go
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM alpine:3.11.11
++FROM lcr.loongnix.cn/library/alpine:3.21
+ WORKDIR /
+ COPY --from=builder /workspace/proxy .
+ COPY --from=builder /workspace/agent .
+diff --git a/Makefile b/Makefile
+index b6f3f0f..3a4314c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ 
+ # Image URL to use all building/pushing image targets
+-IMG ?= kubespheredev/tower:latest
++IMG ?= kubespheredev/tower:v0.2.1
+ # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+ CRD_OPTIONS ?= "crd:trivialVersions=true"
+ 
+@@ -68,7 +68,7 @@ generate: controller-gen
+ 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
+ 
+ # Build the docker image
+-docker-build: test
++docker-build: 
+ 	docker build . -t ${IMG}
+ 
+ docker-build-multiarch: test
+-- 
+2.41.0
+
