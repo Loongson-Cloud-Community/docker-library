@@ -1,0 +1,37 @@
+From 49e007ba203df13325f7270a0a1f6687e742bb55 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Thu, 26 Jun 2025 16:28:00 +0800
+Subject: [PATCH] configmap-reload 0.9.0 add loong64
+
+---
+ Dockerfile | 3 +--
+ Makefile   | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 2bc931f..e296893 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,4 @@
+-ARG BASEIMAGE=busybox
+-FROM $BASEIMAGE
++FROM lcr.loongnix.cn/library/busybox
+ 
+ USER 65534
+ 
+diff --git a/Makefile b/Makefile
+index a0727cd..ac0ca2f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,7 +23,7 @@ GOARCH ?= $(shell go env GOARCH)
+ ORG := github.com/jimmidyson
+ REPOPATH ?= $(ORG)/configmap-reload
+ DOCKER_IMAGE_NAME ?= jimmidyson/configmap-reload
+-DOCKER_IMAGE_TAG ?= latest
++DOCKER_IMAGE_TAG ?= v0.9.0
+ 
+ LDFLAGS := -s -w -extldflags '-static'
+ 
+-- 
+2.41.0
+
