@@ -8,21 +8,15 @@ LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
-SOURCE = console
-SOURCE_URL = https://github.com/kubesphere/console.git
 default: image
 
-image: src/$(SOURCE)
-	cp -r dist src/$(SOURCE)
-	cd src/$(SOURCE)  && REPO=console make container
-	docker tag console/ks-console:master $(IMAGE) 
-
-src/$(SOURCE):
-	git clone -q -b v$(TAG) --depth=1 $(SOURCE_URL) $@
-	cd $@ && \
-		git apply ../../loongarch.patch
+image: console-4.1.3.tar.gz
+	docker build -t $(IMAGE) .
+console-4.1.3.tar.gz:
+	wget https://github.com/Loongson-Cloud-Community/console/releases/download/4.1.3/console-4.1.3.tar.gz
+	tar -vxf console-4.1.3.tar.gz
 clean:
-	rm -rf src
+	rm -rf console-4.1.3.tar.gz console
 push:
 	docker push $(IMAGE)
 	#latest image
