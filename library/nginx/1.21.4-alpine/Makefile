@@ -3,7 +3,7 @@
 REGISTRY?=lcr.loongnix.cn
 ORGANIZATION?=library
 REPOSITORY?=nginx
-TAG?=1.23.1-alpine
+TAG?=1.21.4-alpine
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 
@@ -12,7 +12,6 @@ default: image
 
 image:
 	docker build \
-		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE) \
 		.
 
