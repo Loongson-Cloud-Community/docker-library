@@ -7,7 +7,7 @@ FROM alpine:3.21
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_VERSION  1.23.1
+ENV NGINX_VERSION  1.21.4
 ENV PKG_RELEASE    1
 ENV DYNPKG_RELEASE 1
 
