@@ -23,7 +23,7 @@ define image
 docker-build-list += image-$(1)
 
 image-$(1): src-$(1)
-	cd src-$(1) && docker buildx bake -f docker-bake.hcl
+	cd src-$(1) &&  docker buildx build -f Dockerfile --tag "lcr.loongnix.cn/tonistiigi/binfmt:latest" --build-arg HTTPS_PROXY="${https_proxy}" --platform linux/loong64 --load .
 
 src-$(1):
 	git clone -b $$(BRANCH_$(1)) $(GIT_URL) $$@
@@ -35,6 +35,9 @@ $(eval $(call image,loongarch64))
 
 # 定义 image 目标
 image: image-loongarch64
+#image:
+#	 docker buildx build -f Dockerfile --tag "lcr.loongnix.cn/tonistiigi/binfmt:latest" --build-arg HTTPS_PROXY="${https_proxy}" --platform linux/loong64 --load .
+
 
 image-all: $(docker-build-list)
 
