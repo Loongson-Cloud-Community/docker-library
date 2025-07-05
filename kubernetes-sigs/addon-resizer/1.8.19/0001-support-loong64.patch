@@ -1,14 +1,5 @@
-From 8063c530b182b61bd8878106ddbb1fd41b556b83 Mon Sep 17 00:00:00 2001
-From: zhangguanzhang <zhangguanzhang@qq.com>
-Date: Tue, 1 Aug 2023 16:04:20 +0800
-Subject: [PATCH] support loong64
-
----
- addon-resizer/Makefile | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
-
 diff --git a/addon-resizer/Makefile b/addon-resizer/Makefile
-index c3b5683e0..4bdc76296 100644
+index c3b5683..727239d 100644
 --- a/addon-resizer/Makefile
 +++ b/addon-resizer/Makefile
 @@ -23,9 +23,10 @@ export DOCKER_CLI_EXPERIMENTAL=enabled
@@ -23,7 +14,7 @@ index c3b5683e0..4bdc76296 100644
  MULTI_ARCH_IMG = $(IMAGE)-$(ARCH)
  TAG = 1.8.19
  # The output type could either be docker (local), or registry.
-@@ -51,21 +52,21 @@ buildx-setup:
+@@ -51,21 +52,20 @@ buildx-setup:
  	docker buildx inspect img-builder > /dev/null || docker buildx create --name img-builder --use
  
  container: .container-$(ARCH)
@@ -41,7 +32,7 @@ index c3b5683e0..4bdc76296 100644
          /bin/bash -c "\
              cd /go/src/k8s.io/autoscaler/addon-resizer/ && \
              CGO_ENABLED=0 GOARM=$(GOARM) GOARCH=$(ARCH) go build -a -installsuffix cgo --ldflags '-w -X k8s.io/autoscaler/addon-resizer/nanny.AddonResizerVersion=$(TAG)' -o $(TEMP_DIR)/pod_nanny nanny/main/pod_nanny.go"
- 
+-
 -	docker buildx build \
 +	docker build \
  		--pull \
@@ -52,5 +43,3 @@ index c3b5683e0..4bdc76296 100644
  
  test:
  	docker run --rm -it -v `pwd`:/go/src/k8s.io/autoscaler/addon-resizer/:Z \
--- 
-2.25.1
