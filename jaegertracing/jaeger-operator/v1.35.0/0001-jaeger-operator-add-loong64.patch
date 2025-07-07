@@ -1,0 +1,50 @@
+From 5d9e994cc0924813a902b2c89ac4fe2faf29afad Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Mon, 7 Jul 2025 15:04:37 +0800
+Subject: [PATCH] jaeger-operator add loong64
+
+---
+ Dockerfile | 5 +++--
+ Makefile   | 2 +-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 0184557d..7f2ad37a 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,8 +1,9 @@
+ # Build the manager binary
+-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.17 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ 
+ WORKDIR /workspace
+ # Copy the Go Modules manifests
++ENV GOPROXY=https://goproxy.cn
+ COPY go.mod go.mod
+ COPY go.sum go.sum
+ # cache deps before building and copying source so that we don't need to re-download as much
+@@ -32,7 +33,7 @@ ARG TARGETARCH
+ # Build
+ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build -ldflags="-X ${VERSION_PKG}.version=${VERSION} -X ${VERSION_PKG}.buildDate=${VERSION_DATE} -X ${VERSION_PKG}.defaultJaeger=${JAEGER_VERSION}" -a -o jaeger-operator main.go
+ 
+-FROM registry.access.redhat.com/ubi8/ubi
++FROM lcr.loongnix.cn/library/loongnix-server:23.1-rc1
+ 
+ ENV USER_UID=1001 \
+     USER_NAME=jaeger-operator
+diff --git a/Makefile b/Makefile
+index 1ee1cf5f..8edfb9cc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -8,7 +8,7 @@ VECHO = @
+ endif
+ 
+ VERSION_DATE ?= $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
++PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le,linux/loong64
+ GOARCH ?= $(go env GOARCH)
+ GOOS ?= $(go env GOOS)
+ GO_FLAGS ?= GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 GO111MODULE=on
+-- 
+2.41.0
+
