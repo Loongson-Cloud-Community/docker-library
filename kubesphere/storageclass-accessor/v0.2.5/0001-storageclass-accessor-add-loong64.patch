@@ -1,0 +1,75 @@
+From 133f4afead32481ee2edaa33b577a4440f5a26de Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Mon, 14 Jul 2025 14:33:43 +0800
+Subject: [PATCH] storageclass-accessor add loong64
+
+---
+ Dockerfile | 9 +++++----
+ Makefile   | 7 ++++---
+ 2 files changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index cd43500..da9e860 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,5 @@
+ # Build the manager binary
+-FROM golang:1.16 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ 
+ WORKDIR /workspace
+ # Copy the Go Modules manifests
+@@ -7,6 +7,7 @@ COPY go.mod go.mod
+ COPY go.sum go.sum
+ # cache deps before building and copying source so that we don't need to re-download as much
+ # and so that source changes don't invalidate our downloaded layer
++ENV GOPROXY=https://goproxy.cn
+ RUN go mod download
+ 
+ # Copy the go source
+@@ -15,13 +16,13 @@ COPY webhook/ webhook/
+ COPY client/ client/
+ 
+ # Build
+-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
++RUN CGO_ENABLED=0 GOOS=linux GOARCH=loong64 go build -a -o manager main.go
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM kubesphere/distroless-static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/manager .
+ USER 65532:65532
+ 
+-ENTRYPOINT ["/manager"]
+\ No newline at end of file
++ENTRYPOINT ["/manager"]
+diff --git a/Makefile b/Makefile
+index c3611ee..59f21f6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,10 +1,11 @@
+ GIT_COMMIT=$(shell git rev-parse HEAD | head -c 7)
+-IMG ?= kubesphere/storageclass-accessor:${GIT_COMMIT}
++IMG ?= kubesphere/storageclass-accessor:v0.2.5
+ IMGLATEST ?= kubesphere/storageclass-accessor:latest
+ 
+ .PHONY: build
+ build:
+-	go mod tidy && go mod verify && go build -o bin/manager main.go
++	go env -w GOSUMDB=sum.golang.google.cn 
++	go get golang.org/x/sys@latest && go mod tidy && go mod verify && go build -o bin/manager main.go
+ 
+ .PHONY: docker-build
+ docker-build: #test ## Build docker image with the manager.
+@@ -14,4 +15,4 @@ docker-build: #test ## Build docker image with the manager.
+ docker-push: ## Push docker image with the manager.
+ 	docker push ${IMG}
+ 	docker tag ${IMG} ${IMGLATEST}
+-	docker push ${IMGLATEST}
+\ No newline at end of file
++	docker push ${IMGLATEST}
+-- 
+2.47.1
+
