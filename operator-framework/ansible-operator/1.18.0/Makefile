@@ -3,7 +3,7 @@
 REGISTRY?=lcr.loongnix.cn
 ORGANIZATION?=operator-framework
 REPOSITORY?=ansible-operator
-TAG?=1.8.0
+TAG?=1.18.0
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 
