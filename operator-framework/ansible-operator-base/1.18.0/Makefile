@@ -11,7 +11,7 @@ IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 default: image
 
 download: clean
-	curl -L -o tini https://github.com/Loongson-Cloud-Community/tini/releases/download/v0.19.0/tini-static
+	curl -L -o tini https://github.com/Loongson-Cloud-Community/tini/releases/download/v0.19.0/tini-static_abi2.0	
 	chmod +x tini
 
 image: download

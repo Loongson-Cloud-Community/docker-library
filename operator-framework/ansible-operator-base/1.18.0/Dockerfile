@@ -25,7 +25,8 @@ ENV PIP_NO_CACHE_DIR=1 \
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
 RUN yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
-  && yum install -y libffi-devel openssl-devel python3-devel gcc python3-pip python3-setuptools
+  && yum install -y libffi-devel openssl-devel python3-devel gcc python3-pip python3-setuptools \
+  && pip install ansible-runner~=1.4.7 ansible-runner-http==1.0.0 ipaddress==1.0.23 openshift~=0.12.0 ansible~=2.9.15 jmespath==0.10.0 cryptography==3.3.2
 
 COPY tini /
 

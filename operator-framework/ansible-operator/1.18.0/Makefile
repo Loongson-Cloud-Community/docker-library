@@ -10,11 +10,8 @@ IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 
 default: image
 
-download: clean
-	curl -L -o ansible-operator https://github.com/Loongson-Cloud-Community/operator-sdk/releases/download/v1.8.0/ansible-operator
-	chmod +x ansible-operator
 
-image: download
+image:
 	docker build \
 		-t $(IMAGE) \
 		.
@@ -22,5 +19,3 @@ image: download
 push:
 	docker push $(IMAGE)
 
-clean:
-	rm -f ansible-operator
