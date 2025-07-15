@@ -1,0 +1,48 @@
+From b46101c2d5098a8d812d4be4cffd29de55b99dee Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 15 Jul 2025 11:12:58 +0800
+Subject: [PATCH] kube-rbac-proxy Add loong64
+
+---
+ Dockerfile | 4 ++--
+ Makefile   | 4 +++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 8ae83311..f4318076 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,6 +1,6 @@
+-FROM gcr.io/distroless/static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ 
+-ARG BINARY=kube-rbac-proxy-linux-amd64
++ARG BINARY=kube-rbac-proxy-linux-loong64
+ COPY _output/$BINARY /usr/local/bin/kube-rbac-proxy
+ EXPOSE 8080
+ USER 65532:65532
+diff --git a/Makefile b/Makefile
+index 50e90c23..8e79eb27 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,7 +13,7 @@ PKGS=$(shell go list ./... | grep -v /test/e2e)
+ DOCKER_REPO?=quay.io/brancz/kube-rbac-proxy
+ KUBECONFIG?=$(HOME)/.kube/config
+ 
+-ALL_ARCH=amd64 arm arm64 ppc64le s390x
++ALL_ARCH=amd64 arm arm64 ppc64le s390x loong64
+ ALL_PLATFORMS=$(addprefix linux/,$(ALL_ARCH))
+ ALL_BINARIES ?= $(addprefix $(OUT_DIR)/$(BIN)-, \
+ 				$(addprefix linux-,$(ALL_ARCH)) \
+@@ -40,6 +40,8 @@ $(OUT_DIR)/$(BIN)-%:
+ 	GOARCH=$(word 2,$(subst -, ,$(*:.exe=))) \
+ 	GOOS=$(word 1,$(subst -, ,$(*:.exe=))) \
+ 	CGO_ENABLED=0 \
++	go get -d golang.org/x/sys@v0.10.0 &&\
++	go get -d  github.com/prometheus/procfs@v0.17.0 && go mod tidy &&\
+ 	go build --installsuffix cgo -o $(OUT_DIR)/$(BIN)-$* $(GITHUB_URL)
+ 
+ build: $(OUT_DIR)/$(BIN)
+-- 
+2.47.1
+
