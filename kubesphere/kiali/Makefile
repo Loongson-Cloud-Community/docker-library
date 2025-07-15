@@ -11,6 +11,8 @@ LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
 KIALI_SRC_URL=https://github.com/kiali/kiali.git
 KIALI_OP_URL=https://github.com/kiali/kiali-operator.git
 default: image
+PATCH0=kiali_operator_loongarch_patch.patch
+PATCH1=kiali_loongarch_patch.patch
 
 image: src/kiali src/kiali-operator
 	$(MAKE) -C src/kiali build-ui
@@ -19,11 +21,11 @@ image: src/kiali src/kiali-operator
 	$(MAKE) -C src/kiali-operator build OPERATOR_QUAY_TAG=lcr.loongnix.cn/kubesphere/kiali-operator:2.0.0
 src/kiali:src/kiali-operator
 	git clone -b v$(TAG) $(KIALI_SRC_URL) $@
-	cd $@ && git apply ../../kiali_loongarch_patch.patch
+	cd $@ && git apply ../../$(PATCH1)
 	cd src && export KIALI_SOURCES=$(PWD) && ln -s $(KIALI_SOURCES)/kiali-operator kiali/operator
 src/kiali-operator:
 	git clone -b v$(TAG) $(KIALI_OP_URL) $@
-	cd $@ && git apply ../../kiali_operator_loongarch_patch.patch
+	cd $@ && git apply ../../$(PATCH0)
 clean:
 	rm -rf src
 push:
