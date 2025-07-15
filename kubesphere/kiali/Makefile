@@ -13,12 +13,13 @@ KIALI_OP_URL=https://github.com/kiali/kiali-operator.git
 default: image
 PATCH0=kiali_operator_loongarch_patch.patch
 PATCH1=kiali_loongarch_patch.patch
-
+SOURCE0=kiali
+SOURCE1=kiali-operator
 image: src/kiali src/kiali-operator
-	$(MAKE) -C src/kiali build-ui
-	$(MAKE) -C src/kiali build
-	$(MAKE) -C src/kiali container-build QUAY_TAG=$(IMAGE)
-	$(MAKE) -C src/kiali-operator build OPERATOR_QUAY_TAG=lcr.loongnix.cn/kubesphere/kiali-operator:2.0.0
+	$(MAKE) -C src/$(SOURCE0) build-ui
+	$(MAKE) -C src/$(SOURCE0) build
+	$(MAKE) -C src/$(SOURCE0) container-build QUAY_TAG=$(IMAGE)
+	$(MAKE) -C src/$(SOURCE1) build OPERATOR_QUAY_TAG=lcr.loongnix.cn/kubesphere/kiali-operator:2.0.0
 src/kiali:src/kiali-operator
 	git clone -b v$(TAG) $(KIALI_SRC_URL) $@
 	cd $@ && git apply ../../$(PATCH1)
