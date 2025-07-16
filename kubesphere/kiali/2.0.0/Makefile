@@ -16,12 +16,12 @@ PATCH1=kiali_loongarch_patch.patch
 SOURCE0=kiali
 SOURCE1=kiali-operator
 image: src/kiali src/kiali-operator
-	dnf install -y ./yarnpkg-1.22.21-1.lns23.noarch.rpm
-	$(MAKE) -C src/$(SOURCE0) build-ui
-	$(MAKE) -C src/$(SOURCE0) build
-	$(MAKE) -C src/$(SOURCE0) container-build QUAY_TAG=$(IMAGE)
+	dnf install -y ./*.rpm
+	$(MAKE) -C src/$(SOURCE0) build-ui &&\
+	$(MAKE) -C src/$(SOURCE0) build &&\
+	$(MAKE) -C src/$(SOURCE0) container-build QUAY_TAG=$(IMAGE) &&\
 	$(MAKE) -C src/$(SOURCE1) build OPERATOR_QUAY_TAG=lcr.loongnix.cn/kubesphere/kiali-operator:2.0.0
-	dnf remove -y yarnpkg
+	dnf remove -y ./*.rpm
 src/kiali:src/kiali-operator
 	git clone -b v$(TAG) $(KIALI_SRC_URL) $@
 	cd $@ && git apply ../../$(PATCH1)
