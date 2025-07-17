@@ -1,0 +1,57 @@
+From e1876260dea3ee0407073dc1d08a55770ef78265 Mon Sep 17 00:00:00 2001
+From: doupengda <doupengda@loongson.cn>
+Date: Mon, 21 Jul 2025 09:48:29 +0800
+Subject: [PATCH] brancz-kube-rbac proxy v0.18.0 add support for loong64
+
+---
+ Dockerfile | 4 ++--
+ Makefile   | 6 ++++--
+ 2 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 3bdb158..7ff0b1c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,6 +1,6 @@
+-ARG GOARCH=amd64
++ARG GOARCH=loong64
+ ARG GOOS=linux
+-ARG BASEIMAGE=gcr.io/distroless/static:nonroot-$GOARCH
++ARG BASEIMAGE=lcr.loongnix.cn/distroless/static-debian12:nonroot
+ FROM $BASEIMAGE
+ 
+ ARG BINARY=kube-rbac-proxy-$GOOS-$GOARCH
+diff --git a/Makefile b/Makefile
+index d5308c4..4a9795d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,7 @@ PROGRAM_NAME?=kube-rbac-proxy
+ GITHUB_URL=github.com/brancz/kube-rbac-proxy
+ GOOS?=$(shell uname -s | tr A-Z a-z)
+ GOARCH?=$(shell go env GOARCH)
+-BASEIMAGE?=gcr.io/distroless/static:nonroot-$(GOARCH)
++BASEIMAGE?=lcr.loongnix.cn/distroless/static-debian12:nonroot
+ OUT_DIR=_output
+ VERSION?=$(shell cat VERSION)-$(shell git rev-parse --short HEAD)
+ VERSION_SEMVER?=$(shell echo $(VERSION) | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+')
+@@ -16,7 +16,7 @@ DOCKER_REPO?=quay.io/brancz/kube-rbac-proxy
+ KUBECONFIG?=$(HOME)/.kube/config
+ CONTAINER_NAME?=$(DOCKER_REPO):$(VERSION)
+ 
+-ALL_ARCH=amd64 arm arm64 ppc64le s390x
++ALL_ARCH=amd64 arm arm64 ppc64le s390x loong64
+ ALL_PLATFORMS=$(addprefix linux/,$(ALL_ARCH))
+ ALL_BINARIES ?= $(addprefix $(OUT_DIR)/$(PROGRAM_NAME)-, \
+ 				$(addprefix linux-,$(ALL_ARCH)) \
+@@ -43,6 +43,8 @@ $(OUT_DIR)/$(PROGRAM_NAME)-%:
+ 	GOARCH=$(word 2,$(subst -, ,$(*:.exe=))) \
+ 	GOOS=$(word 1,$(subst -, ,$(*:.exe=))) \
+ 	CGO_ENABLED=0 \
++       go env -w GOSUMDB=sum.golang.org && \
++       go env -w GOPROXY=https://goproxy.cn,direct && go mod tidy && \
+ 	go build --installsuffix cgo -ldflags="-X k8s.io/component-base/version.gitVersion=$(VERSION_SEMVER) -X k8s.io/component-base/version.gitCommit=$(shell git rev-parse HEAD) -X k8s.io/component-base/version/verflag.programName=$(PROGRAM_NAME)" -o $(OUT_DIR)/$(PROGRAM_NAME)-$* $(GITHUB_URL)/cmd/kube-rbac-proxy
+ 
+ clean:
+-- 
+2.47.3
+
