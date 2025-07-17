@@ -1,0 +1,48 @@
+From e52a2ca3705f82973780ab818ae6ab67888d110c Mon Sep 17 00:00:00 2001
+From: dpd <doupengda@loongson.cn>
+Date: Thu, 17 Jul 2025 14:59:36 +0800
+Subject: [PATCH] brancz kube-rbac-proxy v0.18.0 add support for loong64
+
+---
+ Dockerfile | 4 ++--
+ Makefile   | 4 +++-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 3bdb158..7ff0b1c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,6 +1,6 @@
+-ARG GOARCH=amd64
++ARG GOARCH=loong64
+ ARG GOOS=linux
+-ARG BASEIMAGE=gcr.io/distroless/static:nonroot-$GOARCH
++ARG BASEIMAGE=lcr.loongnix.cn/distroless/static-debian12:nonroot
+ FROM $BASEIMAGE
+ 
+ ARG BINARY=kube-rbac-proxy-$GOOS-$GOARCH
+diff --git a/Makefile b/Makefile
+index d5308c4..1d17eaf 100644
+--- a/Makefile
++++ b/Makefile
+@@ -16,7 +16,7 @@ DOCKER_REPO?=quay.io/brancz/kube-rbac-proxy
+ KUBECONFIG?=$(HOME)/.kube/config
+ CONTAINER_NAME?=$(DOCKER_REPO):$(VERSION)
+ 
+-ALL_ARCH=amd64 arm arm64 ppc64le s390x
++ALL_ARCH=amd64 arm arm64 ppc64le s390x loong64
+ ALL_PLATFORMS=$(addprefix linux/,$(ALL_ARCH))
+ ALL_BINARIES ?= $(addprefix $(OUT_DIR)/$(PROGRAM_NAME)-, \
+ 				$(addprefix linux-,$(ALL_ARCH)) \
+@@ -43,6 +43,8 @@ $(OUT_DIR)/$(PROGRAM_NAME)-%:
+ 	GOARCH=$(word 2,$(subst -, ,$(*:.exe=))) \
+ 	GOOS=$(word 1,$(subst -, ,$(*:.exe=))) \
+ 	CGO_ENABLED=0 \
++	go get -d golang.org/x/sys@v0.10.0 &&\
++	go get -d  github.com/prometheus/procfs@v0.17.0 && go mod tidy &&\
+ 	go build --installsuffix cgo -ldflags="-X k8s.io/component-base/version.gitVersion=$(VERSION_SEMVER) -X k8s.io/component-base/version.gitCommit=$(shell git rev-parse HEAD) -X k8s.io/component-base/version/verflag.programName=$(PROGRAM_NAME)" -o $(OUT_DIR)/$(PROGRAM_NAME)-$* $(GITHUB_URL)/cmd/kube-rbac-proxy
+ 
+ clean:
+-- 
+2.20.1
+
