@@ -1,0 +1,15 @@
+diff --git a/deploy/docker/Dockerfile-distroless b/deploy/docker/Dockerfile-distroless
+index 481043264..50a786350 100644
+--- a/deploy/docker/Dockerfile-distroless
++++ b/deploy/docker/Dockerfile-distroless
+@@ -1,7 +1,8 @@
+ # ubi8/openssl is essentially ubi8-micro with openssl
+-FROM registry.access.redhat.com/ubi8/openssl
++#FROM registry.access.redhat.com/ubi8/openssl
++FROM lcr.loongnix.cn/loongnix/loongnix-server:23.1 AS ubi-build
+ 
+-LABEL maintainer="kiali-dev@googlegroups.com"
++LABEL maintainer="liujie@loongson.cn"
+ 
+ # Add kiali user and group
+ RUN echo kiali:x:1000: >> /etc/group
