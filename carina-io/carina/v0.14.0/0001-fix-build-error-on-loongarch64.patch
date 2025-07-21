@@ -1,0 +1,128 @@
+From 774a7355d1fd53d2977002cca68862a1a0290477 Mon Sep 17 00:00:00 2001
+From: Wenlong Zhang <zhangwenlong@loongson.cn>
+Date: Mon, 21 Jul 2025 14:42:56 +0800
+Subject: [PATCH] fix build error on loongarch64
+
+---
+ Dockerfile           |  6 ++++--
+ Makefile             | 11 ++++++-----
+ scheduler/Dockerfile |  8 +++++---
+ scheduler/Makefile   |  7 ++++---
+ 4 files changed, 19 insertions(+), 13 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 6768fa6..7812a0c 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,5 +1,6 @@
+ # Build the manager binary
+-FROM golang:1.19.0-buster AS builder
++#FROM registry.cn-hangzhou.aliyuncs.com/carina/golang:1.19.13 AS builder
++FROM lcr.loongnix.cn/library/golang:1.19 AS builder
+ 
+ ENV GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOPROXY=https://goproxy.cn,direct
+ ENV WORKSPACE=/workspace/github.com/carina-io/carina
+@@ -13,7 +14,8 @@ RUN echo Commit: `git log --pretty='%s%b%B' -n 1`
+ RUN cd $WORKSPACE/cmd/carina-node && go build -ldflags="-X main.gitCommitID=`git rev-parse HEAD`" -gcflags '-N -l' -o /tmp/carina-node .
+ RUN cd $WORKSPACE/cmd/carina-controller && go build -ldflags="-X main.gitCommitID=`git rev-parse HEAD`" -gcflags '-N -l' -o /tmp/carina-controller .
+ 
+-FROM registry.cn-hangzhou.aliyuncs.com/carina/centos-lvm2:runtime-20220108
++#FROM registry.cn-hangzhou.aliyuncs.com/carina/centos-lvm2:runtime-20220108
++FROM lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2
+ 
+ # copy binary file
+ COPY --from=builder /tmp/carina-node /usr/bin/
+diff --git a/Makefile b/Makefile
+index 909e031..8751e1b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -5,15 +5,16 @@ KUBEBUILDER_VERSION = 3.2.1
+ KUSTOMIZE_VERSION= 3.8.9
+ PROTOC_VERSION=3.15.0
+ DATE=$(shell date '+%Y%m%d%H%M%S')
+-ARCH ?= linux/arm64,linux/amd64
++ARCH ?= linux/arm64,linux/amd64,linux/loong64
+ 
+ # Image URL to use all building/pushing image targets
+ IMG ?= carina:raw
+ # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+ CRD_OPTIONS ?= "crd:trivialVersions=true"
+ 
+-IMAGE_REPOSITORY=registry.cn-hangzhou.aliyuncs.com/carina
+-VERSION ?= latest
++IMAGE_REPOSITORY=lcr.loongnix.cn/carina
++#VERSION ?= latest
++VERSION ?= v0.14.0
+ 
+ 
+ # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+@@ -75,7 +76,7 @@ docker-build:
+ 	go mod vendor
+ 	docker build -t $(IMAGE_REPOSITORY)/carina:$(VERSION) .
+ 	rm -rf vendor
+-	docker push $(IMAGE_REPOSITORY)/carina:$(VERSION)
++#	docker push $(IMAGE_REPOSITORY)/carina:$(VERSION)
+ 
+ # Push the docker image
+ release:
+@@ -102,4 +103,4 @@ echo "Downloading $(2)" ;\
+ GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+ rm -rf $$TMP_DIR ;\
+ }
+-endef
+\ No newline at end of file
++endef
+diff --git a/scheduler/Dockerfile b/scheduler/Dockerfile
+index e4c6a7d..ef07c51 100644
+--- a/scheduler/Dockerfile
++++ b/scheduler/Dockerfile
+@@ -1,4 +1,5 @@
+-FROM golang:1.19.0-buster AS builder
++#FROM registry.cn-hangzhou.aliyuncs.com/carina/golang:1.19.13 AS builder
++FROM lcr.loongnix.cn/library/golang:1.19 AS builder
+ 
+ ENV GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOPROXY=https://goproxy.cn,direct
+ ENV WORKSPACE=/workspace/github.com/carina-io/carina/scheduler
+@@ -9,7 +10,8 @@ ADD . .
+ 
+ RUN cd $WORKSPACE/cmd && go build -gcflags '-N -l' -o /tmp/carina-scheduler .
+ 
+-FROM alpine:3.16
++#FROM registry.cn-hangzhou.aliyuncs.com/carina/alpine:3.16
++FROM lcr.loongnix.cn/library/alpine:3.22.0
+ ENV WORKSPACE=/workspace/github.com/carina-io/carina/scheduler
+ 
+ COPY --from=builder $WORKSPACE/debug/scheduler-config.yaml /etc/kubernetes
+@@ -18,4 +20,4 @@ COPY --from=builder /tmp/carina-scheduler /bin/carina-scheduler
+ RUN chmod +x /bin/carina-scheduler
+ 
+ WORKDIR /bin
+-CMD ["carina-scheduler"]
+\ No newline at end of file
++CMD ["carina-scheduler"]
+diff --git a/scheduler/Makefile b/scheduler/Makefile
+index b01715a..50ed43b 100644
+--- a/scheduler/Makefile
++++ b/scheduler/Makefile
+@@ -1,6 +1,7 @@
+ 
+-IMAGE_REPOSITORY=registry.cn-hangzhou.aliyuncs.com/carina
+-VERSION ?= latest
++IMAGE_REPOSITORY=lcr.loongnix.cn/carina
++#VERSION ?= latest
++VERSION ?= v0.14.0
+ DATE=$(shell date '+%Y%m%d%H%M%S')
+ ARCH ?= linux/arm64,linux/amd64
+ 
+@@ -13,7 +14,7 @@ docker-build:
+ 	go mod vendor
+ 	docker build -t $(IMAGE_REPOSITORY)/carina-scheduler:$(VERSION) .
+ 	rm -rf vendor
+-	docker push $(IMAGE_REPOSITORY)/carina-scheduler:$(VERSION)
++#	docker push $(IMAGE_REPOSITORY)/carina-scheduler:$(VERSION)
+ 
+ # Push the docker image
+ release:
+-- 
+2.41.0
+
