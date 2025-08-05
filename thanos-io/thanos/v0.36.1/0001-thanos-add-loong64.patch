@@ -1,0 +1,83 @@
+From 1b06dfd070c4f7636189ea3f3f224e19ad75f8fe Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Fri, 20 Jun 2025 11:00:56 +0800
+Subject: [PATCH] thanos add loong64
+
+---
+ Dockerfile.multi-stage   | 8 +++++---
+ Makefile                 | 9 ++++++---
+ scripts/installprotoc.sh | 2 ++
+ 3 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile.multi-stage b/Dockerfile.multi-stage
+index a7b58f8b..0f8de51d 100644
+--- a/Dockerfile.multi-stage
++++ b/Dockerfile.multi-stage
+@@ -1,6 +1,8 @@
+ # By default we pin to amd64 sha. Use make docker to automatically adjust for arm64 versions.
+-ARG BASE_DOCKER_SHA="14d68ca3d69fceaa6224250c83d81d935c053fb13594c811038c461194599973"
+-FROM golang:1.21-alpine3.18 as builder
++#ARG BASE_DOCKER_SHA="14d68ca3d69fceaa6224250c83d81d935c053fb13594c811038c461194599973"
++
++FROM lcr.loongnix.cn/library/golang:1.21-alpine as builder
++ENV GOPROXY=https://goproxy.cn
+ 
+ WORKDIR $GOPATH/src/github.com/thanos-io/thanos
+ # Change in the docker context invalidates the cache so to leverage docker
+@@ -16,7 +18,7 @@ RUN git update-index --refresh; make build
+ 
+ # -----------------------------------------------------------------------------
+ 
+-FROM quay.io/prometheus/busybox@sha256:${BASE_DOCKER_SHA}
++FROM lcr.loongnix.cn/prometheus/busybox:1.32.0-glibc
+ LABEL maintainer="The Thanos Authors"
+ 
+ COPY --from=builder /go/bin/thanos /bin/thanos
+diff --git a/Makefile b/Makefile
+index 29e1d5cc..1fd9f737 100644
+--- a/Makefile
++++ b/Makefile
+@@ -28,14 +28,17 @@ else ifeq ($(arch), arm64)
+ else ifeq ($(arch), aarch64)
+         # arm64
+         BASE_DOCKER_SHA=${arm64}
++else ifeq ($(arch), loongarch64)
++        # loong64
++        BASE_DOCKER_SHA=${loong64}
+ else ifeq ($(arch), ppc64le)
+ 	# ppc64le
+ 	BASE_DOCKER_SHA=${ppc64le}
+ else
+-	echo >&2 "only support amd64, arm64 or ppc64le arch" && exit 1
++	echo >&2 "only support amd64, arm64, loong64 or ppc64le arch" && exit 1
+ endif
+-DOCKER_ARCHS       ?= amd64 arm64 ppc64le
+-# Generate three targets: docker-xxx-amd64, docker-xxx-arm64, docker-xxx-ppc64le.
++DOCKER_ARCHS       ?= amd64 arm64 loong64 ppc64le
++# Generate three targets: docker-xxx-amd64, docker-xxx-arm64, docker-xxx-loong64, docker-xxx-ppc64le.
+ # Run make docker-xxx -n to see the result with dry run.
+ BUILD_DOCKER_ARCHS = $(addprefix docker-build-,$(DOCKER_ARCHS))
+ TEST_DOCKER_ARCHS  = $(addprefix docker-test-,$(DOCKER_ARCHS))
+diff --git a/scripts/installprotoc.sh b/scripts/installprotoc.sh
+index 452201c9..ed173862 100755
+--- a/scripts/installprotoc.sh
++++ b/scripts/installprotoc.sh
+@@ -22,6 +22,7 @@ is_supported_platform() {
+     linux/amd64) found=0 ;;
+     linux/i386) found=0 ;;
+     linux/arm64) found=0 ;;
++    linux/loong64) found=0 ;;
+     linux/ppc64le) found=0 ;;
+   esac
+   return $found
+@@ -39,6 +40,7 @@ adjust_arch() {
+     amd64) ARCH=x86_64 ;;
+     i386) ARCH=x86_32 ;;
+     arm64) ARCH=aarch_64 ;;
++    loong64) ARCH=loongarch_64 ;;
+     ppc64le) ARCH=ppcle_64 ;;
+   esac
+   true
+-- 
+2.41.0
+

@@ -1,0 +1,50 @@
+From bb75a19957f25772b2f60229a418c8afe49e52a4 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 22 Jul 2025 14:47:38 +0800
+Subject: [PATCH] notification-tenant-sidecar v4.0.2 add loong64
+
+---
+ sidecar/kubesphere/4.0.0/Dockerfile | 6 +++---
+ sidecar/kubesphere/4.0.0/Makefile   | 4 ++++
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/sidecar/kubesphere/4.0.0/Dockerfile b/sidecar/kubesphere/4.0.0/Dockerfile
+index a8645c0..7ebbaab 100644
+--- a/sidecar/kubesphere/4.0.0/Dockerfile
++++ b/sidecar/kubesphere/4.0.0/Dockerfile
+@@ -1,14 +1,14 @@
+ # Use of this source code is governed by a Apache license
+ # that can be found in the LICENSE file.
+ 
+-FROM golang:1.20 as tenant-sidecar
++FROM lcr.loongnix.cn/library/golang:1.24 as tenant-sidecar
+ 
+ COPY / /
+ WORKDIR /
+-ENV GOPROXY=https://goproxy.io
++ENV GOPROXY=https://goproxy.cn
+ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o tenant-sidecar main.go backend.go
+ 
+-FROM kubesphere/distroless-static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=tenant-sidecar /tenant-sidecar .
+ USER nonroot:nonroot
+diff --git a/sidecar/kubesphere/4.0.0/Makefile b/sidecar/kubesphere/4.0.0/Makefile
+index 1f735bc..40404b3 100644
+--- a/sidecar/kubesphere/4.0.0/Makefile
++++ b/sidecar/kubesphere/4.0.0/Makefile
+@@ -19,6 +19,10 @@ docker-build:
+ docker-build-amd64:
+ 	docker build -f Dockerfile -t ${IMG}${AMD64} .
+ 
++# Build the docker image for loong64
++docker-build-loong64:
++	docker build -f Dockerfile -t ${IMG} .
++
+ # Push the docker image
+ push-amd64:
+ 	docker push ${IMG}${AMD64}
+-- 
+2.47.3
+

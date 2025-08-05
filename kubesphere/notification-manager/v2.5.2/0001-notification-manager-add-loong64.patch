@@ -1,0 +1,110 @@
+From eba9e89e138c1b96fddbb4dbff1be7bd781918d6 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Mon, 14 Jul 2025 16:26:23 +0800
+Subject: [PATCH] notification-manager add loong64
+
+---
+ Makefile                            | 22 +++++++++++++++++-----
+ cmd/notification-manager/Dockerfile |  6 +++---
+ cmd/operator/Dockerfile             |  6 +++---
+ 3 files changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index dba03a0..df013ea 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,6 +4,7 @@ REGISTRY?=kubesphere
+ IMG ?= $(REGISTRY)/notification-manager-operator:$(VERSION)
+ NM_IMG ?= $(REGISTRY)/notification-manager:$(VERSION)
+ AMD64 ?= -amd64
++LOONG64 ?= -loong64
+ 
+ # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ ifeq (,$(shell go env GOBIN))
+@@ -89,16 +90,16 @@ helm: controller-gen
+ 	kustomize build config/helm | sed -e '/creationTimestamp/d' > helm/crds/bundle.yaml
+ 	tar zcvf notification-manager.tgz helm
+ 
+-# Build all docker images for amd64 and arm64
++# Build all docker images for amd64 arm64 and loong64
+ build: test build-op build-nm
+ 
+-# Build the docker image for amd64 and arm64
++# Build the docker image for amd64 arm64 and loong64
+ build-op:
+-	docker buildx build --push --platform linux/amd64,linux/arm64 -f cmd/operator/Dockerfile . -t ${IMG}
++	docker buildx build --push --platform linux/amd64,linux/arm64,linux/loong64 -f cmd/operator/Dockerfile . -t ${IMG}
+ 
+-# Build the docker image for amd64 and arm64
++# Build the docker image for amd64 arm64 and loong64
+ build-nm:
+-	docker buildx build --push --platform linux/amd64,linux/arm64 -f cmd/notification-manager/Dockerfile . -t ${NM_IMG}
++	docker buildx build --push --platform linux/amd64,linux/arm64,linux/loong64 -f cmd/notification-manager/Dockerfile . -t ${NM_IMG}
+ 
+ # Build all docker images for amd64
+ build-amd64: test build-op-amd64 build-nm-amd64
+@@ -116,6 +117,17 @@ push-amd64:
+ 	docker push ${IMG}${AMD64}
+ 	docker push ${NM_IMG}${AMD64}
+ 
++# Build all docker images for loong64
++build-loong64: test build-op-loong64 build-nm-loong64
++
++# Build the docker image for loong64
++build-op-loong64:
++	docker build -f cmd/operator/Dockerfile . -t ${IMG}${LOONG64}
++
++# Build the docker image for loong64
++build-nm-loong64:
++	docker build -f cmd/notification-manager/Dockerfile . -t ${NM_IMG}${LOONG64}
++
+ #docker-clean:
+ #	docker rmi `docker image ls|awk '{print $2,$3}'|grep none|awk '{print $2}'|tr "\n" " "`
+ 
+diff --git a/cmd/notification-manager/Dockerfile b/cmd/notification-manager/Dockerfile
+index a8e29f3..fba4ec5 100644
+--- a/cmd/notification-manager/Dockerfile
++++ b/cmd/notification-manager/Dockerfile
+@@ -1,6 +1,6 @@
+-ARG GOPROXY="https://goproxy.io"
++ARG GOPROXY="https://goproxy.cn"
+ # Build the manager binary
+-FROM golang:1.20 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ ARG GOPROXY
+ 
+ WORKDIR /workspace
+@@ -22,7 +22,7 @@ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o notification-manager main.go
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM kubesphere/distroless-static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/notification-manager .
+ USER nonroot:nonroot
+diff --git a/cmd/operator/Dockerfile b/cmd/operator/Dockerfile
+index 0551fcb..093519a 100644
+--- a/cmd/operator/Dockerfile
++++ b/cmd/operator/Dockerfile
+@@ -1,6 +1,6 @@
+-ARG GOPROXY="https://goproxy.io"
++ARG GOPROXY="https://goproxy.cn"
+ # Build the manager binary
+-FROM golang:1.20 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ ARG GOPROXY
+ 
+ WORKDIR /workspace
+@@ -23,7 +23,7 @@ RUN GOPROXY=$GOPROXY CGO_ENABLED=0 GO111MODULE=on go build -a -o notification-ma
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM kubesphere/distroless-static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/notification-manager-operator .
+ USER nonroot:nonroot
+-- 
+2.47.1
+

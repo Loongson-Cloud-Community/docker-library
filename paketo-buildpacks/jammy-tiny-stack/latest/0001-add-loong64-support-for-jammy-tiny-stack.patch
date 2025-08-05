@@ -1,0 +1,33 @@
+From bab7f8fac7fab0d7cf721f029bba2d7f253b8508 Mon Sep 17 00:00:00 2001
+From: Wenlong Zhang <zhangwenlong@loongson.cn>
+Date: Fri, 25 Jul 2025 16:17:22 +0800
+Subject: [PATCH] add loong64 support for jammy-tiny-stack
+
+---
+ stack/run/build.sh       | 2 ++
+ stack/run/run.Dockerfile | 3 ++-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+ create mode 100644 stack/run/build.sh
+
+diff --git a/stack/run/build.sh b/stack/run/build.sh
+new file mode 100644
+index 0000000..352ab9c
+--- /dev/null
++++ b/stack/run/build.sh
+@@ -0,0 +1,2 @@
++#!/bin/bash
++docker build --build-arg packages="base-files ca-certificates libc6 libssl3t64 netbase openssl tzdata zlib1g" -t paketobuildpacks/run-jammy-tiny:latest -f run.Dockerfile .
+diff --git a/stack/run/run.Dockerfile b/stack/run/run.Dockerfile
+index dc31fa7..06a3253 100644
+--- a/stack/run/run.Dockerfile
++++ b/stack/run/run.Dockerfile
+@@ -1,4 +1,5 @@
+-FROM ubuntu:jammy AS builder
++#FROM ubuntu:jammy AS builder
++FROM lcr.loongnix.cn/library/debian:13 AS builder
+ 
+ ARG packages
+ 
+-- 
+2.41.0
+

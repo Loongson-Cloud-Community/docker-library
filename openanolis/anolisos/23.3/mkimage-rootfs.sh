@@ -19,7 +19,7 @@ fi
 
 output="AnolisOS-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="https://build.openanolis.cn/kojifiles/output/nightly/anolis-23-20250605.1/compose/os/loongarch64/os/"
+repos_baseos_url="https://mirrors.openanolis.cn/anolis/23.3/os/loongarch64/os/"
 
 trap cleanup TERM EXIT
 

@@ -1,0 +1,44 @@
+From daca3a04eccb4357e452f88b0d5a563e1c948dfb Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Thu, 17 Jul 2025 10:35:48 +0800
+Subject: [PATCH] logsidecar-injector add loong64
+
+---
+ Dockerfile | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 83acf22..327e8e7 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM golang:1.17 as builder
++FROM lcr.loongnix.cn/library/golang:1.24 as builder
+ WORKDIR /workspace
+ 
+ # Copy the Go Modules manifests
+@@ -6,6 +6,7 @@ COPY go.mod go.mod
+ COPY go.sum go.sum
+ # cache deps before building and copying source so that we don't need to re-download as much
+ # and so that source changes don't invalidate our downloaded layer
++ENV GOPROXY=https://goproxy.cn
+ RUN go mod download
+ 
+ # Copy the go source
+@@ -13,11 +14,12 @@ COPY main.go main.go
+ COPY injector/ injector/
+ 
+ # Build
++RUN go get -d golang.org/x/sys@v0.3.0 && go mod tidy
+ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o ./bin/injector ./main.go
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM kubesphere/distroless-static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/bin/injector /usr/local/bin/injector
+ USER nonroot:nonroot
+-- 
+2.47.1
+

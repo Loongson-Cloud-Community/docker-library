@@ -1,0 +1,43 @@
+From 5d723a0a11db1438208d85900db4cf58390c552c Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 1 Jul 2025 09:18:34 +0800
+Subject: [PATCH] process-exporter add loong64
+
+---
+ Dockerfile | 3 ++-
+ Makefile   | 4 ++--
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 86a113c..515cbec 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,8 +1,9 @@
+ # Start from a Debian image with the latest version of Go installed
+ # and a workspace (GOPATH) configured at /go.
+-FROM --platform=$BUILDPLATFORM golang:1.22 AS build
++FROM --platform=$BUILDPLATFORM lcr.loongnix.cn/library/golang:1.24 AS build
+ ARG TARGETARCH
+ ARG BUILDPLATFORM
++ENV GOPROXY=https://goproxy.cn
+ WORKDIR /go/src/github.com/ncabatoff/process-exporter
+ ADD . .
+ 
+diff --git a/Makefile b/Makefile
+index 63a8881..316b97f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -58,8 +58,8 @@ install:
+ docker:
+ 	@echo ">> building docker image"
+ 	docker build -t "$(DOCKER_IMAGE_NAME):$(TAG_VERSION)" .
+-	docker rm configs
+-	docker create -v /packaging --name configs alpine:3.4 /bin/true
++#	docker rm configs
++	docker create -v /packaging --name configs lcr.loongnix.cn/library/alpine:3.22 /bin/true
+ 	docker cp packaging/conf configs:/packaging/conf
+ 	docker run --rm --volumes-from configs "$(DOCKER_IMAGE_NAME):$(TAG_VERSION)" $(SMOKE_TEST)
+ 
+-- 
+2.41.0
+

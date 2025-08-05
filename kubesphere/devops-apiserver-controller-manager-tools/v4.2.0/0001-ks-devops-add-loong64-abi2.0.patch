@@ -1,0 +1,93 @@
+From a551ff9d8209d2880c3c8c93c7abc7ef6706ea43 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 10 Jun 2025 10:19:04 +0800
+Subject: [PATCH] ks-devops add loong64 abi2.0
+
+---
+ config/dockerfiles/apiserver/Dockerfile          |  7 ++++---
+ config/dockerfiles/controller-manager/Dockerfile |  7 ++++---
+ config/dockerfiles/tools/Dockerfile              | 12 +++++++-----
+ 3 files changed, 15 insertions(+), 11 deletions(-)
+
+diff --git a/config/dockerfiles/apiserver/Dockerfile b/config/dockerfiles/apiserver/Dockerfile
+index a18a79c..69b8968 100644
+--- a/config/dockerfiles/apiserver/Dockerfile
++++ b/config/dockerfiles/apiserver/Dockerfile
+@@ -1,7 +1,7 @@
+ # Build the manager binary
+-FROM golang:1.23 AS builder
++FROM lcr.loongnix.cn/library/golang:1.23 AS builder
+ 
+-ARG GOPROXY
++ENV GOPROXY=https://goproxy.cn
+ WORKDIR /workspace
+ 
+ # Copy the Go Modules manifests
+@@ -18,7 +18,8 @@ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o apiserver cmd/apiserver/apiserve
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM gcr.io/distroless/static:nonroot
++#FROM gcr.io/distroless/static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/apiserver .
+ USER nonroot:nonroot
+diff --git a/config/dockerfiles/controller-manager/Dockerfile b/config/dockerfiles/controller-manager/Dockerfile
+index 1900b2b..7d10217 100644
+--- a/config/dockerfiles/controller-manager/Dockerfile
++++ b/config/dockerfiles/controller-manager/Dockerfile
+@@ -1,7 +1,7 @@
+ # Build the manager binary
+-FROM golang:1.23 AS builder
++FROM lcr.loongnix.cn/library/golang:1.23 AS builder
+ 
+-ARG GOPROXY
++ENV GOPROXY=https://goproxy.cn
+ WORKDIR /workspace
+ 
+ # Copy the Go Modules manifests
+@@ -19,7 +19,8 @@ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o controller-manager cmd/controlle
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM gcr.io/distroless/static:nonroot
++#FROM gcr.io/distroless/static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ WORKDIR /
+ COPY --from=builder /workspace/controller-manager .
+ USER nonroot:nonroot
+diff --git a/config/dockerfiles/tools/Dockerfile b/config/dockerfiles/tools/Dockerfile
+index bd3f284..7571c23 100644
+--- a/config/dockerfiles/tools/Dockerfile
++++ b/config/dockerfiles/tools/Dockerfile
+@@ -1,11 +1,12 @@
+-FROM golang:1.23 as downloader
++FROM lcr.loongnix.cn/library/golang:1.23 as downloader
++ENV GOPROXY=https://goproxy.cn
+ RUN go install github.com/linuxsuren/http-downloader@v0.0.98
+-RUN http-downloader install kubesphere-sigs/ks@v0.0.73
++RUN http-downloader install loong-hy/ks@v0.0.73
+ 
+ # Build the tool binary
+-FROM golang:1.23 AS builder
++FROM lcr.loongnix.cn/library/golang:1.23 AS builder
+ 
+-ARG GOPROXY
++ENV GOPROXY=https://goproxy.cn
+ WORKDIR /workspace
+ 
+ # Copy the Go Modules manifests
+@@ -22,7 +23,8 @@ RUN CGO_ENABLED=0 GO111MODULE=on go build -a -o devops-tools cmd/tools/main.go
+ 
+ # Use distroless as minimal base image to package the manager binary
+ # Refer to https://github.com/GoogleContainerTools/distroless for more details
+-FROM gcr.io/distroless/static:nonroot
++#FROM gcr.io/distroless/static:nonroot
++FROM lcr.loongnix.cn/distroless/static-debian12:nonroot
+ COPY --from=builder /workspace/devops-tools /usr/local/bin/devops-tools
+ COPY --from=downloader /usr/local/bin/ks /usr/local/bin/ks
+ USER nonroot:nonroot
+-- 
+2.41.0
+
