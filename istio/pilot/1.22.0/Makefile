@@ -29,3 +29,4 @@ push:
 
 clean:
 	rm -rf istio
+
