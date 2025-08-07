@@ -1,0 +1,13 @@
+FROM lcr.loongnix.cn/library/debian:sid-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata systemd && rm -rf /var/lib/apt/lists/*
+
+COPY vector-loongarch64-unknown-linux-gnu/bin/vector /usr/bin/vector
+COPY vector-loongarch64-unknown-linux-gnu/etc /etc/
+COPY vector-loongarch64-unknown-linux-gnu/config/vector.yaml /etc/vector/vector.yaml
+RUN mkdir -p /var/lib/vector
+
+# Smoke test
+RUN ["vector", "--version"]
+
+ENTRYPOINT ["/usr/bin/vector"]
