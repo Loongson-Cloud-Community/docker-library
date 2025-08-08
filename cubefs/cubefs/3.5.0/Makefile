@@ -31,10 +31,5 @@ image:
 
 push:
 	docker push $(IMAGE)
-	docker push $(IIMAGELT)
+	docker push $(IMAGELTP)
 	#latest image
-	@if [ $(LATEST) = "true" ]; \
-		then \
-		docker tag $(IMAGE) $(LATEST_IMAGE); \
-		docker push $(LATEST_IMAGE); \
-	fi
