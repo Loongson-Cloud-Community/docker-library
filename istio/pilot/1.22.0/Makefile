@@ -15,7 +15,7 @@ src: clean
 	git clone --depth 1 -b 1.22.0 https://github.com/istio/istio
 
 image: src
-	cd istio && git apply ../$(PATCH) && \
+	cd istio && ls && git apply ../$(PATCH) && \
 	cp -r ../vendor . && \
 	docker run -v $(PWD)/istio/pilot/1.22.0/istio:/istio  lcr.loongnix.cn/library/golang:1.24  sh -c "cd  /istio && ls && go version  && go build -mod=vendor -o ./pilot-discovery  ./pilot/cmd/pilot-discovery/main.go" && \ 
 	docker build -t lcr.loongnix.cn/istio/distro_source:latest -f docker/Dockerfile.distro_source . && \
