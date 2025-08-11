@@ -8,23 +8,26 @@ LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
+IMAGE_EULERMAKER=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):24.03-lts-loongarch
 
 default: image
 
 rootfs:
-	bash mkimage-rootfs-openeuler.sh
+	docker run --rm --security-opt seccomp=unconfined \
+		-v `pwd`:/wk lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2\
+		/bin/bash -c -- 'yum install -y tar; /wk/mkimage-rootfs-openeuler.sh;cp /*tar.gz* /wk'
 image: rootfs
 	docker build \
 		--build-arg http_proxy=$(http_proxy) \
 		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE) \
 		.
+	docker build \
+		--build-arg http_proxy=$(http_proxy) \
+		--build-arg https_proxy=$(https_proxy) \
+		-t $(IMAGE_EULERMAKER) \
+		.
 
 push:
 	docker push $(IMAGE)
-	#latest image
-	@if [ $(LATEST) = "true" ]; \
-		then \
-		docker tag $(IMAGE) $(LATEST_IMAGE); \
-		docker push $(LATEST_IMAGE); \
-	fi
+	docker push $(IMAGE_EULERMAKER)
