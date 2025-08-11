@@ -1,0 +1,141 @@
+From 1b6719d0cd7f630a3137854c2ff9843721a52381 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Mon, 7 Jul 2025 17:15:16 +0800
+Subject: [PATCH] add loong64
+
+jaeger add loong64
+---
+ Makefile                            |  9 +++++++--
+ cmd/agent/Dockerfile                |  2 +-
+ docker/Makefile                     | 16 ++++++++++------
+ docker/debug/Dockerfile             |  2 ++
+ plugin/storage/cassandra/Dockerfile |  2 +-
+ 5 files changed, 21 insertions(+), 10 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 3e04bf10..6db7b120 100644
+--- a/Makefile
++++ b/Makefile
+@@ -62,7 +62,7 @@ COLOR_PASS=$(shell printf "\033[32mPASS\033[0m")
+ COLOR_FAIL=$(shell printf "\033[31mFAIL\033[0m")
+ COLORIZE ?=$(SED) ''/PASS/s//$(COLOR_PASS)/'' | $(SED) ''/FAIL/s//$(COLOR_FAIL)/''
+ DOCKER_NAMESPACE?=jaegertracing
+-DOCKER_TAG?=latest
++DOCKER_TAG?=1.35
+ 
+ MOCKERY=mockery
+ 
+@@ -221,6 +221,7 @@ build-all-in-one build-all-in-one-debug: build-ui
+ 
+ .PHONY: build-agent build-agent-debug
+ build-agent build-agent-debug:
++	go get -d golang.org/x/sys@v0.10.0 && go mod tidy
+ 	$(GOBUILD) $(DISABLE_OPTIMIZATIONS) -o ./cmd/agent/agent$(SUFFIX)-$(GOOS)-$(GOARCH) $(BUILD_INFO) ./cmd/agent/main.go
+ 
+ .PHONY: build-query build-query-debug
+@@ -259,6 +260,10 @@ build-binaries-s390x:
+ build-binaries-arm64:
+ 	GOOS=linux GOARCH=arm64 $(MAKE) build-platform-binaries
+ 
++.PHONY: build-binaries-loong64
++build-binaries-loong64:
++	GOOS=linux GOARCH=loong64 $(MAKE) build-platform-binaries
++
+ .PHONY: build-binaries-ppc64le
+ build-binaries-ppc64le:
+ 	GOOS=linux GOARCH=ppc64le $(MAKE) build-platform-binaries
+@@ -281,7 +286,7 @@ build-platform-binaries: build-agent \
+ 	build-es-rollover
+ 
+ .PHONY: build-all-platforms
+-build-all-platforms: build-binaries-linux build-binaries-windows build-binaries-darwin build-binaries-darwin-arm64 build-binaries-s390x build-binaries-arm64 build-binaries-ppc64le
++build-all-platforms: build-binaries-linux build-binaries-windows build-binaries-darwin build-binaries-darwin-arm64 build-binaries-s390x build-binaries-arm64 build-binaries-loong64 build-binaries-ppc64le
+ 
+ .PHONY: docker-images-cassandra
+ docker-images-cassandra:
+diff --git a/cmd/agent/Dockerfile b/cmd/agent/Dockerfile
+index ae6e3378..d089a5bd 100644
+--- a/cmd/agent/Dockerfile
++++ b/cmd/agent/Dockerfile
+@@ -10,7 +10,7 @@ ENTRYPOINT ["/go/bin/agent-linux"]
+ USER ${USER_UID}
+ 
+ FROM $debug_image AS debug
+-ARG TARGETARCH=amd64
++ARG TARGETARCH=loong64
+ ARG USER_UID=10001
+ COPY agent-debug-linux-$TARGETARCH /go/bin/agent-linux
+ EXPOSE 5775/udp 6831/udp 6832/udp 5778/tcp 12345/tcp
+diff --git a/docker/Makefile b/docker/Makefile
+index f0568adf..4cc8b819 100644
+--- a/docker/Makefile
++++ b/docker/Makefile
+@@ -1,17 +1,19 @@
+ VERSION := 1.0.0
+-ROOT_IMAGE ?= alpine:3.14
++ROOT_IMAGE ?= lcr.loongnix.cn/library/alpine:3.22
+ CERT_IMAGE := $(ROOT_IMAGE)
+-GOLANG_IMAGE := golang:1.18-alpine
++GOLANG_IMAGE := lcr.loongnix.cn/library/golang:1.24-alpine
+ 
+ DOCKER_REGISTRY ?= localhost:5000
+ BASE_IMAGE ?= $(DOCKER_REGISTRY)/baseimg_alpine:latest
+ DEBUG_IMAGE ?= $(DOCKER_REGISTRY)/debugimg_alpine:latest
+-PLATFORMS ?= linux/amd64,linux/s390x,linux/ppc64le,linux/arm64
++PLATFORMS ?= linux/loong64
+ 
+ create-baseimg-debugimg: create-baseimg create-debugimg
+ 
+ create-baseimg: prepare-docker-buildx
+-	docker buildx build -t $(BASE_IMAGE) --push \
++	docker buildx build --progress=plain -t $(BASE_IMAGE) --push \
++		--build-arg https_proxy=http://10.130.0.14:7890 \
++		--build-arg http_proxy=http://10.130.0.14:7890 \
+ 		--build-arg root_image=$(ROOT_IMAGE) \
+ 		--build-arg cert_image=$(CERT_IMAGE) \
+ 		--platform=$(PLATFORMS) \
+@@ -19,14 +21,16 @@ create-baseimg: prepare-docker-buildx
+ 
+ create-debugimg: prepare-docker-buildx
+ 	docker buildx build -t $(DEBUG_IMAGE) --push \
++		--build-arg https_proxy=http://10.130.0.14:7890 \
++		--build-arg http_proxy=http://10.130.0.14:7890 \
+ 		--build-arg golang_image=$(GOLANG_IMAGE) \
+ 		--platform=$(PLATFORMS) \
+ 		docker/debug
+ 
+ .PHONY: prepare-docker-buildx
+ prepare-docker-buildx:
+-	docker buildx inspect jaeger-build > /dev/null || docker buildx create --use --name=jaeger-build --buildkitd-flags="--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --driver-opt="network=host"
+-	docker inspect registry > /dev/null || docker run --rm -d -p 5000:5000 --name registry registry:2
++	docker buildx inspect jaeger-build > /dev/null || docker buildx create --use --name=jaeger-build --driver-opt image=lcr.loongnix.cn/library/buildkit:0.23.0-alpine-3.22 --buildkitd-flags="--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host" --driver-opt="network=host"
++	docker inspect registry > /dev/null || docker run --rm -d -p 5000:5000 --name registry lcr.loongnix.cn/library/registry:2.7.1
+ 
+ .PHONY: clean-docker-buildx
+ clean-docker-buildx:
+diff --git a/docker/debug/Dockerfile b/docker/debug/Dockerfile
+index b8e4ddc0..d58a61b6 100644
+--- a/docker/debug/Dockerfile
++++ b/docker/debug/Dockerfile
+@@ -8,6 +8,8 @@ RUN apk add --update --no-cache ca-certificates make git build-base mailcap
+ #Once go-delve adds support for ppc64le (see PR go-delve/delve#1564), remove this entire conditional.
+ RUN if [[ "$TARGETARCH" == "s390x"  ||  "$TARGETARCH" == "ppc64le" ]] ; then \
+ 	touch /go/bin/dlv; \
++    elif [[ "$TARGETARCH" == "loong64" ]]; then \
++	go install -tags=exp.linuxloong64 github.com/go-delve/delve/cmd/dlv@latest; \
+     else \
+         go install github.com/go-delve/delve/cmd/dlv@latest; \
+     fi
+diff --git a/plugin/storage/cassandra/Dockerfile b/plugin/storage/cassandra/Dockerfile
+index 7dade5d8..855d62e7 100644
+--- a/plugin/storage/cassandra/Dockerfile
++++ b/plugin/storage/cassandra/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM cassandra:4.0
++FROM lcr.loongnix.cn/library/cassandra:4.0
+ 
+ COPY schema/* /cassandra-schema/
+ 
+-- 
+2.47.3
+
