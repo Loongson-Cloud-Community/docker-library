@@ -8,6 +8,7 @@ LATEST		?=true
 
 IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):$(TAG)
 LATEST_IMAGE=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):latest
+IMAGE_EULERMAKER=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):24.03-lts-sp1-loongarch
 
 default: image
 
@@ -19,9 +20,17 @@ image: rootfs
 		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE) \
 		.
+	docker build \
+		--build-arg http_proxy=$(http_proxy) \
+		--build-arg https_proxy=$(https_proxy) \
+		-t $(IMAGE_EULERMAKER) \
+		.
+	rm -rf openEuler-24.03.rootfs.loongarch64.tar.gz
+	rm -rf openEuler-24.03.rootfs.loongarch64.tar.gz.md5
 
 push:
 	docker push $(IMAGE)
+	docker push $(IMAGE_EULERMAKER)
 	#latest image
 	@if [ $(LATEST) = "true" ]; \
 		then \

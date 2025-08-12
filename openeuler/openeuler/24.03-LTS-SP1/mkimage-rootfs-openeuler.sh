@@ -142,6 +142,8 @@ chroot ${rootfs} rm -rf /dev/null
 chroot ${rootfs} mknod /dev/null c 1 3
 chroot ${rootfs} chmod 666 /dev/null
 
+cp /etc/resolv.conf ${rootfs}/etc
+chroot ${rootfs} yum --disablerepo=debuginfo install -y ${pkg_list}
 cur_dir=$(pwd)
 pushd ${rootfs} > /dev/null
 	if [ -e "${cur_dir}/${output}" ]; then
@@ -154,6 +156,7 @@ pushd ${rootfs} > /dev/null
 	tar --numeric-owner -acf "${cur_dir}/${output}" .
 popd > /dev/null
 
+rm -rf $work_dir
 echo "Generating ${output} md5sum...."
 sync && md5sum ${output} > ${output}.md5
 
