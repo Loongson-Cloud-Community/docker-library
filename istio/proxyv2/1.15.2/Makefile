@@ -20,7 +20,7 @@ envoy-static:
 image: src envoy-static
 	cd istio && git apply ../$(PATCH) && \
 	cp ../envoy-static . && chmod +x ./envoy-static && \
-	docker run -e GOPROXY=https://goproxy.cn,direct -v $(PWD)/istio:/istio lcr.loongnix.cn/library/golang:1.24 sh -c "cd /istio && ls && go get -u golang.org/x/net@latest && go get -u golang.org/x/sys@latest && go mod tidy  && go build  -o ./pilot-agent ./pilot/cmd/pilot-agent/main.go" && \
+	docker run -e GOPROXY=https://goproxy.cn,direct -v $(PWD)/istio/proxyv2/1.15.2/istio:/istio lcr.loongnix.cn/library/golang:1.24 sh -c "cd /istio && ls && go get -u golang.org/x/net@latest && go get -u golang.org/x/sys@latest && go mod tidy  && go build  -o ./pilot-agent ./pilot/cmd/pilot-agent/main.go" && \
 	wget https://storage.googleapis.com/istio-build/proxy/metadata_exchange-50b9c585b01ec99eeeb9c29aa4847d833b78625f.compiled.wasm && \
 	wget https://storage.googleapis.com/istio-build/proxy/stats-50b9c585b01ec99eeeb9c29aa4847d833b78625f.wasm && \
 	wget https://storage.googleapis.com/istio-build/proxy/metadata_exchange-50b9c585b01ec99eeeb9c29aa4847d833b78625f.wasm && \
