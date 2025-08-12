@@ -13,9 +13,7 @@ IMAGE_EULERMAKER=$(REGISTRY)/$(ORGANIZATION)/$(REPOSITORY):24.03-lts-loongarch
 default: image
 
 rootfs:
-	docker run --rm --security-opt seccomp=unconfined \
-		-v `pwd`:/wk lcr.loongnix.cn/openeuler/openeuler:24.03-LTS-SP2\
-		/bin/bash -c -- 'yum install -y tar; /wk/mkimage-rootfs-openeuler.sh;cp /*tar.gz* /wk'
+	bash mkimage-rootfs-openeuler.sh
 image: rootfs
 	docker build \
 		--build-arg http_proxy=$(http_proxy) \
@@ -27,7 +25,8 @@ image: rootfs
 		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE_EULERMAKER) \
 		.
-
+	rm -rf openEuler-24.03.rootfs.loongarch64.tar.gz
+	rm -rf openEuler-24.03.rootfs.loongarch64.tar.gz.md5
 push:
 	docker push $(IMAGE)
 	docker push $(IMAGE_EULERMAKER)
