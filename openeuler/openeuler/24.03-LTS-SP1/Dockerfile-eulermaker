@@ -1,8 +1,8 @@
 From scratch
 MAINTAINER zhangwenlong@loongson.cn
 ADD openEuler-24.03.rootfs.loongarch64.tar.gz /
-COPY git-lfs-3.6.1-1.oe2403sp1.loongarch64.rpm /
 COPY openEuler.repo /etc/yum.repos.d/openEuler.repo
+COPY git-lfs-3.6.1-1.oe2403sp1.loongarch64.rpm /
 RUN yum install -y /git-lfs-3.6.1-1.oe2403sp1.loongarch64.rpm gdb-gdbserver
 RUN git lfs install
 CMD ["/bin/bash"]
