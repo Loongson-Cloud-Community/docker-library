@@ -24,7 +24,9 @@ image: rootfs
 		--build-arg http_proxy=$(http_proxy) \
 		--build-arg https_proxy=$(https_proxy) \
 		-t $(IMAGE_EULERMAKER) \
+		-f Dockerfile-eulermaker \
 		.
+	rm -rf openEuler-24.03.rootfs.loongarch64.tar.gz  openEuler-24.03.rootfs.loongarch64.tar.gz.md5 
 
 push:
 	docker push $(IMAGE)

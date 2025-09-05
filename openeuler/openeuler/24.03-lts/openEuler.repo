@@ -1,0 +1,9 @@
+[everything]
+name=everything
+baseurl=https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems3/repositories/openEuler-24.03-LTS-everything:loongarch/openEuler%3A24.03-LTS/loongarch64/
+metalink=https://mirrors.openeuler.org/metalink?repo=$releasever/everything&arch=$basearch
+metadata_expire=1h
+enabled=1
+gpgcheck=0
+gpgkey=http://repo.openeuler.org/openEuler-24.03-LTS/everything/$basearch/RPM-GPG-KEY-openEuler
+
