@@ -1,0 +1,28 @@
+diff --git a/cmd/admission-webhook/Dockerfile b/cmd/admission-webhook/Dockerfile
+index d3a0375..d96b3d1 100644
+--- a/cmd/admission-webhook/Dockerfile
++++ b/cmd/admission-webhook/Dockerfile
+@@ -1,8 +1,11 @@
+-ARG ARCH=amd64
++ARG ARCH=loong64
+ ARG OS=linux
+ ARG GOLANG_BUILDER=1.23
+ 
+-FROM quay.io/prometheus/golang-builder:${GOLANG_BUILDER}-base AS builder
++#FROM quay.io/prometheus/golang-builder:${GOLANG_BUILDER}-base AS builder
++FROM lcr.loongnix.cn/library/golang:1.23 AS builder
++#RUN dnf install git -y
++RUN apt update && apt install git -y
+ WORKDIR /workspace
+ 
+ COPY . .
+@@ -15,7 +18,8 @@ ARG GOARCH
+ ENV GOARCH=${GOARCH}
+ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build make admission-webhook
+ 
+-FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
++#FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
++FROM lcr.loongnix.cn/prometheus/busybox:1.32.0-glibc
+ 
+ COPY --from=builder workspace/admission-webhook /bin/admission-webhook
+ 
