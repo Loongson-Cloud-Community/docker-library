@@ -1,0 +1,7 @@
+From scratch
+MAINTAINER zhangwenlong@loongson.cn
+ADD openEuler-24.03.rootfs.loongarch64.tar.gz /
+RUN repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems2/repositories/openEuler-24.03-LTS-Next-everything:loongarch/openEuler%3A24.03-LTS-Next/loongarch64/";\
+    yum install -y git-lfs gdb-gdbserver --repofrompath=local,$repos_baseos_url --nogpgcheck --disablerepo=OS --disablerepo=everything --disablerepo=EPOL --disablerepo=debuginfo --disablerepo=source --disablerepo=update --disablerepo=update-source
+RUN git lfs install
+CMD ["/bin/bash"]
