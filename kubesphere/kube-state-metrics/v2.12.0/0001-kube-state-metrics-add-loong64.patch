@@ -1,0 +1,53 @@
+From 72e19ca4715f2518a31b49258a5aabcd89328bc6 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Thu, 17 Jul 2025 15:24:44 +0800
+Subject: [PATCH] kube-state-metrics add loong64
+
+---
+ Dockerfile | 7 ++++---
+ Makefile   | 4 ++--
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 798ac7e6..04cfc755 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,14 +1,15 @@
+-ARG GOVERSION=1.21
++ARG GOVERSION=1.24
+ ARG GOARCH
+-FROM golang:${GOVERSION} as builder
++FROM lcr.loongnix.cn/library/golang:${GOVERSION} as builder
+ ARG GOARCH
+ ENV GOARCH=${GOARCH}
+ WORKDIR /go/src/k8s.io/kube-state-metrics/
+ COPY . /go/src/k8s.io/kube-state-metrics/
+ 
++ENV GOPROXY=https://goproxy.cn
+ RUN make build-local
+ 
+-FROM gcr.io/distroless/static:latest-${GOARCH}
++FROM lcr.loongnix.cn/distroless/static-debian12:latest
+ COPY --from=builder /go/src/k8s.io/kube-state-metrics/kube-state-metrics /
+ 
+ USER nobody
+diff --git a/Makefile b/Makefile
+index 61736eaf..757d1300 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,10 +13,10 @@ ARCH ?= $(shell go env GOARCH)
+ BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+ GIT_COMMIT ?= $(shell git rev-parse --short HEAD)
+ OS ?= $(shell uname -s | tr A-Z a-z)
+-ALL_ARCH = amd64 arm arm64 ppc64le s390x
++ALL_ARCH = amd64 arm arm64 ppc64le s390x loong64
+ PKG = github.com/prometheus/common
+ PROMETHEUS_VERSION = 2.46.0
+-GO_VERSION = 1.21.8
++GO_VERSION = 1.24
+ IMAGE = $(REGISTRY)/kube-state-metrics
+ MULTI_ARCH_IMG = $(IMAGE)-$(ARCH)
+ USER ?= $(shell id -u -n)
+-- 
+2.47.3
+
