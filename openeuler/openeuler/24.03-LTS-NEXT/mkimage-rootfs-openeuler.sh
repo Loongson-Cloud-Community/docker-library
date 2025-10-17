@@ -55,7 +55,7 @@ mkdir -pv ${repo_dir} || :
 ####################################################################
 cat > ${repo_conf} << EOF
 [baseos]
-name=openEuler-$releasever
+name=openEuler-$releasever-next
 baseurl=${repos_baseos_url}
 gpgcheck=0
 enabled=1

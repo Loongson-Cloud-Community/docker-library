@@ -153,6 +153,7 @@ pushd ${rootfs} > /dev/null
 #	tar --numeric-owner --exclude='dev/*' -acf "${cur_dir}/${output}" .
 	tar --numeric-owner -acf "${cur_dir}/${output}" .
 popd > /dev/null
+rm -rf $work_dir
 
 echo "Generating ${output} md5sum...."
 sync && md5sum ${output} > ${output}.md5

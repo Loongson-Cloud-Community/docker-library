@@ -1,6 +1,4 @@
 From scratch
 MAINTAINER zhangwenlong@loongson.cn
 ADD openEuler-24.03.rootfs.loongarch64.tar.gz /
-RUN yum install -y git-lfs gdb-gdbserver
-RUN git lfs install
 CMD ["/bin/bash"]

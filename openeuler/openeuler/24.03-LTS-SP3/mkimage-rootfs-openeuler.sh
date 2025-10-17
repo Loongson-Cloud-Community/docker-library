@@ -19,7 +19,7 @@ fi
 
 output="openEuler-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems2/repositories/openEuler-24.03-LTS-SP1-everything:loongarch/openEuler%3A24.03-LTS-SP1/loongarch64/"
+repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems2/repositories/openEuler-24.03-LTS-Next-everything:loongarch/openEuler%3A24.03-LTS-Next/loongarch64/"
 
 trap cleanup TERM EXIT
 
@@ -55,7 +55,7 @@ mkdir -pv ${repo_dir} || :
 ####################################################################
 cat > ${repo_conf} << EOF
 [baseos]
-name=openEuler-$releasever-sp1
+name=openEuler-$releasever-next
 baseurl=${repos_baseos_url}
 gpgcheck=0
 enabled=1
@@ -143,7 +143,8 @@ chroot ${rootfs} mknod /dev/null c 1 3
 chroot ${rootfs} chmod 666 /dev/null
 
 cp /etc/resolv.conf ${rootfs}/etc
-chroot ${rootfs} yum --disablerepo=debuginfo install -y ${pkg_list}
+chroot ${rootfs} yum install -y $pkg_list --repofrompath=local,$repos_baseos_url --nogpgcheck --disablerepo=OS --disablerepo=everything --disablerepo=EPOL --disablerepo=debuginfo --disablerepo=source --disablerepo=update --disablerepo=update-source
+ 
 cur_dir=$(pwd)
 pushd ${rootfs} > /dev/null
 	if [ -e "${cur_dir}/${output}" ]; then
@@ -156,7 +157,6 @@ pushd ${rootfs} > /dev/null
 	tar --numeric-owner -acf "${cur_dir}/${output}" .
 popd > /dev/null
 
-rm -rf $work_dir
 echo "Generating ${output} md5sum...."
 sync && md5sum ${output} > ${output}.md5
 

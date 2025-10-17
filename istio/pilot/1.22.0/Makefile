@@ -18,7 +18,9 @@ image: src
 	cd istio && ls && git apply ../$(PATCH) && \
 	cp -r ../vendor . && \
 	docker run -v $(PWD)/istio/pilot/1.22.0/istio:/istio  lcr.loongnix.cn/library/golang:1.24  sh -c "cd  /istio && ls && go version  && go build -mod=vendor -o ./pilot-discovery  ./pilot/cmd/pilot-discovery/main.go" && \
+	docker run -v $(PWD)/istio/pilot/1.22.0/istio:/istio  lcr.loongnix.cn/library/golang:1.24  sh -c "cd  /istio && ls && go version  && go build -mod=vendor -o ./loongarch64/istioctl  ./istioctl/cmd/istioctl/main.go" && \
 	docker build -t lcr.loongnix.cn/istio/distro_source:latest -f docker/Dockerfile.distro_source  . && \
+	docker build -t lcr.loongnix.cn/istio/istioctl:1.22.0 --build-arg TARGETARCH=loongarch64  --build-arg ISTIO_BASE_REGISTRY=lcr.loongnix.cn/istio --build-arg BASE_VERSION=1.22.0 -f istioctl/docker/Dockerfile.istioctl . && \
 	docker build -t lcr.loongnix.cn/istio/base:1.22.0 -f docker/Dockerfile.base  . && \
 	docker build -t lcr.loongnix.cn/istio/distroless:1.22.0 -f docker/Dockerfile.distroless . && \
 	docker build -t lcr.loongnix.cn/istio/pilot:1.22.0 --build-arg BASE_DISTRIBUTION=distroless --build-arg BASE_VERSION=1.22.0 -f pilot/docker/Dockerfile.pilot .
