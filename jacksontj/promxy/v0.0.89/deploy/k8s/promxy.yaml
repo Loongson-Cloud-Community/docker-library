@@ -1,0 +1,136 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promxy
+  namespace: promxy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promxy-role
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promxy-role
+subjects:
+- kind: ServiceAccount
+  name: promxy
+  namespace: promxy
+---
+apiVersion: v1
+data:
+  config.yaml: |
+    ##
+    ## Regular prometheus configuration
+    ##
+    global:
+      evaluation_interval: 5s
+      external_labels:
+        source: promxy
+
+    # remote_write configuration is used by promxy as its local Appender, meaning all
+    # metrics promxy would "write" (not export) would be sent to this. Examples
+    # of this include: recording rules, metrics on alerting rules, etc.
+    remote_write:
+      - url: http://localhost:8083/receive
+
+    ##
+    ### Promxy configuration
+    ##
+    promxy:
+      server_groups:
+      - kubernetes_sd_configs:
+        - role: pod
+
+kind: ConfigMap
+metadata:
+  name: promxy-config
+  namespace: promxy
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: promxy
+  name: promxy
+  namespace: promxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promxy
+  template:
+    metadata:
+      labels:
+        app: promxy
+    spec:
+      terminationGracePeriodSeconds: 5
+      serviceAccountName: promxy
+      containers:
+      - args:
+        - "--config=/etc/promxy/config.yaml"
+        - "--web.enable-lifecycle"
+        - "--log-level=trace"
+        env:
+          - name: ROLE
+            value: "1"
+        command:
+        - "/bin/promxy"
+        image: quay.io/jacksontj/promxy:v0.0.77
+        imagePullPolicy: Always
+        name: promxy
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /-/healthy
+            port: web
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        readinessProbe:
+          failureThreshold: 120
+          httpGet:
+            path: /-/ready
+            port: web
+            scheme: HTTP
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        ports:
+        - containerPort: 8082
+          name: web
+        volumeMounts:
+        - mountPath: "/etc/promxy/"
+          name: promxy-config
+          readOnly: true
+      # container to reload configs on configmap change
+      - args:
+        - "--volume-dir=/etc/promxy"
+        - "--webhook-url=http://localhost:8082/-/reload"
+        image: jimmidyson/configmap-reload:v0.1
+        name: promxy-server-configmap-reload
+        volumeMounts:
+        - mountPath: "/etc/promxy/"
+          name: promxy-config
+          readOnly: true
+      volumes:
+      - configMap:
+          name: promxy-config
+        name: promxy-config
