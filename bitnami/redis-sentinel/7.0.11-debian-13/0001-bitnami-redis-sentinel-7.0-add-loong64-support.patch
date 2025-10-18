@@ -1,0 +1,72 @@
+From bcc92cf23747cdbd9e820e7bdcb28bef7dceb62d Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Sat, 18 Oct 2025 09:32:48 +0800
+Subject: [PATCH] bitnami redis-sentinel 7.0 add loong64 support
+
+---
+ .../redis-sentinel/7.0/debian-11/Dockerfile   | 25 +++++++++++--------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
+
+diff --git a/bitnami/redis-sentinel/7.0/debian-11/Dockerfile b/bitnami/redis-sentinel/7.0/debian-11/Dockerfile
+index 56e43efc3a5..cc7c536e7dd 100644
+--- a/bitnami/redis-sentinel/7.0/debian-11/Dockerfile
++++ b/bitnami/redis-sentinel/7.0/debian-11/Dockerfile
+@@ -1,40 +1,45 @@
+ # Copyright VMware, Inc.
+ # SPDX-License-Identifier: APACHE-2.0
+ 
+-FROM docker.io/bitnami/minideb:bullseye
++#FROM docker.io/bitnami/minideb:bullseye
++FROM lcr.loongnix.cn/library/debian:trixie
+ 
+ ARG TARGETARCH
++ARG HTTP_PROXY
++ARG HTTPS_PROXY
+ 
+-LABEL org.opencontainers.image.base.name="docker.io/bitnami/minideb:bullseye" \
++LABEL org.opencontainers.image.base.name="lcr.loongnix.cn/library/debian:trixie" \
+       org.opencontainers.image.created="2023-07-09T09:34:52Z" \
+       org.opencontainers.image.description="Application packaged by VMware, Inc" \
+       org.opencontainers.image.licenses="Apache-2.0" \
+-      org.opencontainers.image.ref.name="7.0.11-debian-11-r27" \
++      org.opencontainers.image.ref.name="7.0.11-debian-13-r27" \
+       org.opencontainers.image.title="redis-sentinel" \
+-      org.opencontainers.image.vendor="VMware, Inc." \
++      org.opencontainers.image.vendor="Loongson" \
+       org.opencontainers.image.version="7.0.11"
+ 
+ ENV HOME="/" \
+     OS_ARCH="${TARGETARCH:-amd64}" \
+-    OS_FLAVOUR="debian-11" \
++    OS_FLAVOUR="debian-13" \
+     OS_NAME="linux" \
+     PATH="/opt/bitnami/redis-sentinel/bin:$PATH"
++ENV HTTP_PROXY=${HTTP_PROXY}
++ENV HTTPS_PROXY=${HTTPS_PROXY}
+ 
+ COPY prebuildfs /
+ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ # Install required system packages and dependencies
+-RUN install_packages ca-certificates curl libssl1.1 procps
++RUN install_packages ca-certificates curl libssl3 procps
+ RUN mkdir -p /tmp/bitnami/pkg/cache/ && cd /tmp/bitnami/pkg/cache/ && \
+     COMPONENTS=( \
+-      "redis-sentinel-7.0.11-1-linux-${OS_ARCH}-debian-11" \
++      "redis-sentinel-7.0.11-1-linux-${OS_ARCH}-debian-13" \
+     ) && \
+     for COMPONENT in "${COMPONENTS[@]}"; do \
+       if [ ! -f "${COMPONENT}.tar.gz" ]; then \
+-        curl -SsLf "https://downloads.bitnami.com/files/stacksmith/${COMPONENT}.tar.gz" -O ; \
+-        curl -SsLf "https://downloads.bitnami.com/files/stacksmith/${COMPONENT}.tar.gz.sha256" -O ; \
++        curl -SsLf "https://github.com/Loongson-Cloud-Community/redis/releases/download/7.0.11/${COMPONENT}.tar.gz" -O ; \
++        curl -SsLf "https://github.com/Loongson-Cloud-Community/redis/releases/download/7.0.11/${COMPONENT}.tar.gz.sha256" -O ; \
+       fi && \
+       sha256sum -c "${COMPONENT}.tar.gz.sha256" && \
+-      tar -zxf "${COMPONENT}.tar.gz" -C /opt/bitnami --strip-components=2 --no-same-owner --wildcards '*/files' && \
++      tar -zxf "${COMPONENT}.tar.gz" -C /opt/bitnami --strip-components=1 --no-same-owner && \
+       rm -rf "${COMPONENT}".tar.gz{,.sha256} ; \
+     done
+ RUN apt-get autoremove --purge -y curl && \
+-- 
+2.47.3
+
