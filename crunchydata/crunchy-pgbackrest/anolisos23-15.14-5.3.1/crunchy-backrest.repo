@@ -1,0 +1,5 @@
+[crunchy-backrest]
+name=AnolisOS-$releasever - crunchy-backrest
+baseurl=https://cloud.loongnix.cn/os-packages/crunchy-backrest/openanolis/23/RPMS/
+enabled=1
+gpgcheck=0
