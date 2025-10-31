@@ -36,7 +36,7 @@ pkg_list="
  expat gawk gdbm glib2 glibc gmp gnupg2 gpgme grep ima-evm-utils
  json-c mpfr ncurses-base procps rpm-build git findutils dnf-plugins-core
  npth p11-kit p11-kit-trust pcre pcre2 popt readline rootfiles
- rpm sed setup systemd systemd-libs tzdata util-linux vim-minimal xz yum
+ rpm sed setup systemd systemd-libs tzdata util-linux vim-minimal xz yum cracklib-dicts
 "
 #pkg_list="
 # acl basesystem bash ca-certificates loongnix-gpg-keys loongnix-release
