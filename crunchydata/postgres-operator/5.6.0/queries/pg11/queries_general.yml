@@ -1,0 +1,16 @@
+###
+#
+# Begin File: PG11 queries_general.yml
+#
+# Copyright © 2017-2024 Crunchy Data Solutions, Inc. All Rights Reserved.
+#
+###
+
+# There are currently no PG11 only queries that are not already in queries_global.yml 
+# This file is kept to allow consistent setting of QUERY_FILE_LIST in sysconfig with future PG versions
+
+###
+#
+# End File: PG11 queries_general.yml
+#
+###
