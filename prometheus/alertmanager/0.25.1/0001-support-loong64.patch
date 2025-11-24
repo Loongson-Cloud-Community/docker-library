@@ -17,7 +17,7 @@ index b1d31b3..942b49a 100644
  ARG OS="linux"
 -FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
 -LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
-+FROM lcr.loongnix.cn/prometheus/busybox:1.32.0-glibc
++FROM lcr.loongnix.cn/prometheus/busybox:glibc-1.37.0
  
  ARG ARCH="amd64"
  ARG OS="linux"
@@ -37,7 +37,7 @@ index e358db6..5545291 100644
  
  PROMU_VERSION ?= 0.14.0
 -PROMU_URL     := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
-+PROMU_URL     ?= https://github.com/Loongson-Cloud-Community/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
++PROMU_URL     ?= https://github.com/Loongson-Cloud-Community/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM)-abi2.0.tar.gz
  
  SKIP_GOLANGCI_LINT :=
  GOLANGCI_LINT :=
