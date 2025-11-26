@@ -24,7 +24,6 @@ src/$(SOURCE):
 	cd $@ && \
 		git apply ../../$(PATCH)
 
-
 image: src/$(SOURCE)
 # Commands for building.
 	DOCKER_ARCHS=loong64 DOCKER_IMG_NAME=$(IMAGE) $(MAKE) -C src/$(SOURCE) build
