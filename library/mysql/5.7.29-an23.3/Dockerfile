@@ -44,7 +44,7 @@ RUN set -eu; \
 		echo '[mysql5.7-server]'; \
                 echo 'name=MySQL 5.7'; \
                 echo 'enabled=1'; \
-                echo 'baseurl=https://cloud.loongnix.cn/os-packages/mysql/5.7/anolis/23.3/loongarch64/'; \
+                echo 'baseurl=https://cloud.loongnix.cn/os-packages/mysql/openAnolis/23.3/mysql-5.7.29-community/loongarch64/'; \
                 echo 'gpgcheck=0'; \
 	} | tee /etc/yum.repos.d/mysql-community.repo \
 	&& dnf makecache \
