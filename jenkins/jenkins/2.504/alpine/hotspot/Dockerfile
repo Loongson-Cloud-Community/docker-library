@@ -1,5 +1,5 @@
 ARG ALPINE_TAG=3.23
-FROM registry.alpinelinux.org/img/alpine:"${ALPINE_TAG}" AS jre-build
+FROM lcr.loongnix.cn/library/alpine:"${ALPINE_TAG}" AS jre-build
 RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.23/main" > /etc/apk/repositories \
     && echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.23/community" >> /etc/apk/repositories
 
@@ -37,7 +37,7 @@ RUN case "$(jlink --version 2>&1)" in \
       --no-header-files \
       --output /javaruntime
 
-FROM registry.alpinelinux.org/img/alpine:"${ALPINE_TAG}" AS controller
+FROM lcr.loongnix.cn/library/alpine:"${ALPINE_TAG}" AS controller
 RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.23/main" > /etc/apk/repositories \
     && echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.23/community" >> /etc/apk/repositories
 
@@ -116,8 +116,7 @@ RUN chown -R ${user} "$JENKINS_HOME" "$REF"
 
 ARG PLUGIN_CLI_VERSION=2.13.2
 ARG PLUGIN_CLI_URL=https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/${PLUGIN_CLI_VERSION}/jenkins-plugin-manager-${PLUGIN_CLI_VERSION}.jar
-RUN export https_proxy=https://10.2.10.197:7890 export https_proxy=http://10.2.10.197:7890 \
-  && curl -fsSL ${PLUGIN_CLI_URL} -o /opt/jenkins-plugin-manager.jar \
+RUN curl -fsSL ${PLUGIN_CLI_URL} -o /opt/jenkins-plugin-manager.jar \
   && echo "$(curl -fsSL "${PLUGIN_CLI_URL}.sha256")  /opt/jenkins-plugin-manager.jar" >/tmp/war_sha \
   && sha256sum -c --strict /tmp/war_sha \
   && rm -f /tmp/war_sha
