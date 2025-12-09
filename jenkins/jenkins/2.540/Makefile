@@ -17,5 +17,6 @@ image:
 		-f alpine/hotspot/Dockerfile \
 		.
 
+
 push:
 	docker push $(IMAGE)
