@@ -1,0 +1,25 @@
+From 47b2958ff897603b8fa3e2be9ccf0468f004a903 Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Tue, 16 Dec 2025 15:23:12 +0800
+Subject: [PATCH] support loong64
+
+Signed-off-by: zhangguanzhang <zhangguanzhang@qq.com>
+---
+ server/etcdmain/etcd.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/server/etcdmain/etcd.go b/server/etcdmain/etcd.go
+index 9921b89df..9808136ec 100644
+--- a/server/etcdmain/etcd.go
++++ b/server/etcdmain/etcd.go
+@@ -472,6 +472,7 @@ func checkSupportArch() {
+ 	if runtime.GOARCH == "amd64" ||
+ 		runtime.GOARCH == "arm64" ||
+ 		runtime.GOARCH == "ppc64le" ||
++		runtime.GOARCH == "loong64" ||
+ 		runtime.GOARCH == "s390x" {
+ 		return
+ 	}
+-- 
+2.50.1
+
