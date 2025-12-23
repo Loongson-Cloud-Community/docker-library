@@ -1,0 +1,161 @@
+From 72417949048fab6acd42c779201874a4d4216cbb Mon Sep 17 00:00:00 2001
+From: zhangguanzhang <zhangguanzhang@qq.com>
+Date: Mon, 22 Dec 2025 14:13:22 +0800
+Subject: [PATCH] support loong64
+
+Signed-off-by: zhangguanzhang <zhangguanzhang@qq.com>
+---
+ Dockerfile       | 51 +++++++-----------------------------------------
+ Makefile         |  7 ++++---
+ pkg/build/cmd.go |  4 ++++
+ 3 files changed, 15 insertions(+), 47 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 7c396354116..eb9acb97a1a 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,10 +1,9 @@
+-# syntax=docker/dockerfile:1
+ 
+ # to maintain formatting of multiline commands in vscode, add the following to settings.json:
+ # "docker.languageserver.formatter.ignoreMultilineInstructions": true
+ 
+-ARG BASE_IMAGE=alpine-base
+-ARG GO_IMAGE=go-builder-base
++ARG BASE_IMAGE=alpine:3.23.0
++ARG GO_IMAGE=golang:1.25.5-alpine
+ ARG JS_IMAGE=js-builder-base
+ ARG JS_PLATFORM=linux/amd64
+ 
+@@ -14,37 +13,11 @@ ARG JS_SRC=js-builder
+ 
+ # Dependabot cannot update dependencies listed in ARGs
+ # By using FROM instructions we can delegate dependency updates to dependabot
+-FROM alpine:3.23.0 AS alpine-base
+-FROM ubuntu:22.04 AS ubuntu-base
+-FROM golang:1.25.5-alpine AS go-builder-base
+-FROM --platform=${JS_PLATFORM} node:22-alpine AS js-builder-base
++
+ 
+ # Javascript build stage
+ FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
+ 
+-ENV NODE_OPTIONS=--max_old_space_size=8000
+-
+-WORKDIR /tmp/grafana
+-
+-COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
+-COPY .yarn .yarn
+-COPY packages packages
+-COPY public public
+-COPY LICENSE ./
+-COPY conf/defaults.ini ./conf/defaults.ini
+-COPY e2e e2e
+-
+-RUN apk add --no-cache make build-base python3
+-
+-RUN yarn install --immutable
+-
+-COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
+-COPY scripts scripts
+-COPY emails emails
+-
+-ENV NODE_ENV=production
+-RUN yarn build
+-
+ # Golang build stage
+ FROM ${GO_IMAGE} AS go-builder
+ 
+@@ -71,7 +44,7 @@ COPY .citools .citools
+ 
+ # Include vendored dependencies
+ COPY pkg/util/xorm pkg/util/xorm
+-COPY pkg/apis/folder pkg/apis/folder
++#COPY pkg/apis/folder pkg/apis/folder
+ COPY pkg/apis/secret pkg/apis/secret
+ COPY pkg/apiserver pkg/apiserver
+ COPY pkg/apimachinery pkg/apimachinery
+@@ -93,6 +66,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
+ COPY pkg/codegen pkg/codegen
+ COPY pkg/plugins/codegen pkg/plugins/codegen
+ 
++ENV GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,https://goproxy.io,direct
+ RUN go mod download
+ RUN if [[ "$BINGO" = "true" ]]; then \
+   go install github.com/bwplotka/bingo@latest && \
+@@ -116,17 +90,6 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
+ 
+ RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+ 
+-# From-tarball build stage
+-FROM ${BASE_IMAGE} AS tgz-builder
+-
+-WORKDIR /tmp/grafana
+-
+-ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
+-
+-COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
+-
+-# add -v to make tar print every file it extracts
+-RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+ 
+ # helpers for COPY --from
+ FROM ${GO_SRC} AS go-src
+@@ -213,8 +176,8 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
+   chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+ 
+ COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
+-COPY --from=js-src /tmp/grafana/public ./public
+-COPY --from=js-src /tmp/grafana/LICENSE ./
++COPY --from=js-src $GF_PATHS_HOME/public ./public
++COPY --from=js-src $GF_PATHS_HOME/LICENSE ./
+ 
+ EXPOSE 3000
+ 
+diff --git a/Makefile b/Makefile
+index 44b64fcb9a9..f121117ed45 100644
+--- a/Makefile
++++ b/Makefile
+@@ -377,20 +377,21 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
+ ##@ Docker
+ 
+ TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
+-PLATFORM=linux/amd64
++PLATFORM ?= linux/amd64
++IMG_NAME ?= grafana/grafana$(TAG_SUFFIX):dev
+ 
+ .PHONY: build-docker-full
+ build-docker-full: ## Build Docker image for development.
+ 	@echo "build docker container"
+ 	tar -ch . | \
+-	docker buildx build - \
++	docker build - \
+ 	--platform $(PLATFORM) \
+ 	--build-arg BINGO=false \
+ 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+ 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+ 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
+ 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+-	--tag grafana/grafana$(TAG_SUFFIX):dev \
++	--tag $(IMG_NAME) \
+ 	$(DOCKER_BUILD_ARGS)
+ 
+ .PHONY: build-docker-full-ubuntu
+diff --git a/pkg/build/cmd.go b/pkg/build/cmd.go
+index 1bad7828946..e9e54278a1c 100644
+--- a/pkg/build/cmd.go
++++ b/pkg/build/cmd.go
+@@ -308,6 +308,10 @@ func setBuildEnv(opts BuildOpts) error {
+ 	}
+ 
+ 	if opts.cgo {
++		// fix _cgo_export.c:25:(.text+0x20): relocation truncated to fit: R_LARCH_B26 against symbol
++		if err := os.Setenv("CGO_CFLAGS", "-O2 -g -mcmodel=extreme"); err != nil {
++			return err
++		}
+ 		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
+ 			return err
+ 		}
+-- 
+2.50.1
+
