@@ -29,7 +29,7 @@ RUN set -x \
     && yum update -y \
     && yum install -y tar java-17-openjdk java-17-openjdk-devel iputils nc vim libcurl \
     && yum clean all
-RUN curl -SL http://cloud.loongnix.cn/releases/loongarch64/alibaba/nacos/2.2.4/nacos-server-2.2.4.tar.gz -o /home/nacos-server.tar.gz \
+RUN curl -SL https://cloud.loongnix.cn/releases/loongarch64/alibaba/nacos/2.2.4/nacos-server-2.2.4.tar.gz -o /home/nacos-server.tar.gz \
     && tar -xzvf /home/nacos-server.tar.gz -C /home \
     && rm -rf /home/nacos-server.tar.gz /home/nacos/bin/* /home/nacos/conf/*.properties /home/nacos/conf/*.example /home/nacos/conf/nacos-mysql.sql \
     && ln -snf /usr/share/zoneinfo/$TIME_ZONE /etc/localtime && echo $TIME_ZONE > /etc/timezone
