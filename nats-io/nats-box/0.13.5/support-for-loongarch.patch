@@ -1,0 +1,85 @@
+diff --git a/Dockerfile b/Dockerfile
+index 8690338..64e2539 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,42 +1,38 @@
+ #syntax=docker/dockerfile-upstream:1.4
+-FROM golang AS builder
++#FROM golang AS builder
++FROM lcr.loongnix.cn/library/golang:1.21.5 AS builder
+ 
+-LABEL maintainer "Derek Collison <derek@nats.io>"
+-LABEL maintainer "Waldemar Quevedo <wally@nats.io>"
++LABEL maintainer "liujie@loongson.cn"
+ 
+-ARG TARGETARCH
++ENV TARGETARCH loong64
+ 
+-ARG VERSION_NATS
+-ARG VERSION_NATS_TOP
+-ARG VERSION_NSC
+-ARG VERSION_STAN
++ENV VERSION_NATS "0.0.35"
++ENV VERSION_NATS_TOP "0.5.3"
++ENV VERSION_NSC "2.7.8"
++ENV VERSION_STAN "0.10.4"
+ 
+ ENV GOPATH /go/${TARGETARCH}
++ENV GOPROXY=https://goproxy.cn,direct 
+ 
+-RUN <<EOT 
+-    set -e
+-    mkdir -p ${GOPATH}
++RUN mkdir -p ${GOPATH}
+ 
+-    go install -ldflags="-X main.version=${VERSION_NSC}" github.com/nats-io/nsc/v2@v${VERSION_NSC}
+-    go install github.com/nats-io/nats-top@v${VERSION_NATS_TOP}
+-    go install github.com/nats-io/natscli/nats@v${VERSION_NATS}
+-    go install github.com/nats-io/stan.go/examples/stan-pub@v${VERSION_STAN}
+-    go install github.com/nats-io/stan.go/examples/stan-sub@v${VERSION_STAN}
+-    go install github.com/nats-io/stan.go/examples/stan-bench@v${VERSION_STAN}
+-EOT
++RUN go install -ldflags="-X main.version=${VERSION_NSC}" github.com/nats-io/nsc/v2@v${VERSION_NSC} && \
++    go install github.com/nats-io/nats-top@v${VERSION_NATS_TOP} && \
++    go install github.com/nats-io/natscli/nats@v${VERSION_NATS} && \
++    go install github.com/nats-io/stan.go/examples/stan-pub@v${VERSION_STAN} && \
++    go install github.com/nats-io/stan.go/examples/stan-sub@v${VERSION_STAN} && \
++    go install github.com/nats-io/stan.go/examples/stan-bench@v${VERSION_STAN} 
+ 
+-FROM base
++FROM lcr.loongnix.cn/library/alpine:3.21.0
+ 
+-ARG TARGETARCH
++ENV TARGETARCH loong64
+ 
+-COPY --from=builder /go/${TARGETARCH}/bin/* /usr/local/bin
++COPY --from=builder /go/${TARGETARCH}/bin/* /usr/local/bin/
+ 
+-RUN <<EOT
+-    set -e
+-    addgroup -g 1000 nats
+-    adduser -D -u 1000 -G nats nats
++RUN set -e && \
++    addgroup -g 1000 nats && \
++    adduser -D -u 1000 -G nats nats && \
+     apk add -U --no-cache ca-certificates curl figlet jq
+-EOT
+ 
+ ENV NKEYS_PATH /nsc/nkeys
+ ENV XDG_DATA_HOME /nsc
+diff --git a/Makefile b/Makefile
+index f360c4e..78d04fc 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,10 +3,7 @@ dockerx: drepo ?= natsio
+ dockerx:
+ ifneq ($(ver),)
+ 	# Ensure 'docker buildx ls' shows correct platforms.
+-	docker buildx build \
+-		--tag $(drepo)/nats-box:$(ver) --tag $(drepo)/nats-box:latest \
+-		--platform linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8 \
+-		--push .
++	docker  build -t $(drepo)/nats-box:$(ver) -t $(drepo)/nats-box:latest .
+ else
+ 	# Missing version, try this.
+ 	# make dockerx ver=1.2.3
