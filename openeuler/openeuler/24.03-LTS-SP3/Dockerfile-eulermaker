@@ -1,7 +1,16 @@
 From scratch
 MAINTAINER zhangwenlong@loongson.cn
 ADD openEuler-24.03.rootfs.loongarch64.tar.gz /
-RUN repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems2/repositories/openEuler-24.03-LTS-Next-everything:loongarch/openEuler%3A24.03-LTS-Next/loongarch64/";\
-    yum install -y git-lfs gdb-gdbserver --repofrompath=local,$repos_baseos_url --nogpgcheck --disablerepo=OS --disablerepo=everything --disablerepo=EPOL --disablerepo=debuginfo --disablerepo=source --disablerepo=update --disablerepo=update-source
+RUN rm -rf /etc/yum.repos.d/openEuler.repo ;\
+    repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems5/repositories/openEuler-24.03-LTS-SP3-everything:loongarch/openEuler%3A24.03-LTS-SP3/loongarch64/"; \
+    yum install --repofrompath=local,$repos_baseos_url --nogpgcheck \
+    -y git-lfs gdb-gdbserver  basesystem bash ca-certificates openEuler-release openEuler-gpg-keys \
+    openEuler-repos chkconfig cracklib crypto-policies dnf \
+    expat gawk gdbm glib2 gmp gnupg2 gpgme grep ima-evm-utils-libs \
+    json-c mpfr ncurses-base procps-ng rpm findutils \
+    npth p11-kit p11-kit-trust pcre2 popt readline rootfiles \
+    rpm sed setup systemd-libs tzdata vim-minimal xz yum \
+    git git-core make gcc procps rpm-build findutils dnf-plugins-core
 RUN git lfs install
+RUN echo "timeout=120" >> /etc/yum.conf ; echo "minrate=0" >> /etc/yum.conf ; echo "retries=5" >> /etc/yum.conf
 CMD ["/bin/bash"]
