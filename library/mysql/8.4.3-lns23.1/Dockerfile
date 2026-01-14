@@ -33,7 +33,7 @@ RUN set -eu; \
 		echo '[mysql8.4-server]'; \
 		echo 'name=MySQL 8.4'; \
 		echo 'enabled=1'; \
-		echo 'baseurl=http://cloud.loongnix.cn/os-packages/loongnix-server/23.1/mysql-8.4/loongarch64'; \
+		echo 'baseurl=https://cloud.loongnix.cn/os-packages/mysql/loongnix-server/23.1/mysql-8.4.3-community/loongarch64/'; \
 		echo 'gpgcheck=0'; \
 	} | tee /etc/yum.repos.d/mysql-community.repo; \
 	dnf makecache
@@ -69,7 +69,7 @@ RUN set -eu; \
 	{ \
 		echo '[mysql-tools-community]'; \
 		echo 'name=MySQL Tools Community'; \
-		echo 'baseurl=http://cloud.loongnix.cn/os-packages/loongnix-server/23.1/mysql-tools-8.4/loongarch64'; \
+		echo 'baseurl=https://cloud.loongnix.cn/os-packages/mysql/loongnix-server/23.1/mysql-tools-8.4.3-community/loongarch64/'; \
 		echo 'enabled=1'; \
 		echo 'gpgcheck=0'; \
 	} | tee /etc/yum.repos.d/mysql-community-tools.repo
