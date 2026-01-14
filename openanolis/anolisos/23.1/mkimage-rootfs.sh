@@ -19,7 +19,8 @@ fi
 
 output="AnolisOS-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="https://build.openanolis.cn/kojifiles/rsync/anolis/23.1/isos/GA/loongarch64/"
+repos_baseos_url="https://mirrors.openanolis.cn/anolis/23.1/os/loongarch64/os/"
+repos_baseos_url1="https://mirrors.openanolis.cn/anolis/23.1/updates/loongarch64/os/"
 
 trap cleanup TERM EXIT
 
@@ -64,6 +65,14 @@ cat > ${repo_conf} << EOF
 [baseos]
 name=AnolisOS-$releasever-baseos
 baseurl=${repos_baseos_url}
+gpgcheck=0
+enabled=1
+priority=1
+excludepkgs="${exclude_pkgs}"
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-LOONGNIX
+[update]
+name=AnolisOS-$releasever-update
+baseurl=${repos_baseos_url1}
 gpgcheck=0
 enabled=1
 priority=1
@@ -137,12 +146,12 @@ chmod +x ${rootfs}/${setting_scripts}
 chroot   ${rootfs} /${setting_scripts}
 
 ##解决在rootfs中su命令没有权限问题
-file_list="fingerprint-auth password-auth postlogin smartcard-auth system-auth user-profile"
-for file in ${file_list}
-do
-        chroot ${rootfs} authselect create-profile ${file}
-        chroot ${rootfs} ln -s /etc/authselect/custom/${file} /etc/pam.d/${file}
-done
+#file_list="fingerprint-auth password-auth postlogin smartcard-auth system-auth user-profile"
+#for file in ${file_list}
+#do
+#        chroot ${rootfs} authselect create-profile ${file}
+#        chroot ${rootfs} ln -s /etc/authselect/custom/${file} /etc/pam.d/${file}
+#done
 
 ##解决在chroot中/dev/null没有权限问题
 chroot ${rootfs} rm -rf /dev/null
