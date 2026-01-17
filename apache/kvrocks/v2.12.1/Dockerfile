@@ -15,20 +15,27 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM debian:bookworm-slim AS build
+#FROM debian:bookworm-slim AS build
+FROM lcr.loongnix.cn/library/debian:forky-slim AS build
 
 ARG MORE_BUILD_ARGS
 
-RUN DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get upgrade -y && apt-get -y --no-install-recommends install git build-essential autoconf cmake libtool python3 libssl-dev clang && apt-get autoremove && apt-get clean
+RUN rm -rf /etc/apt/sources.list.d/debian.sources && echo "deb http://deb.debian.org/debian unstable main" > /etc/apt/sources.list
+
+RUN DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get upgrade -y && apt-get -y --no-install-recommends install git build-essential autoconf cmake libtool python3 libssl-dev clang libgflags-dev && apt-get autoremove && apt-get clean
 
 WORKDIR /kvrocks
 
 COPY . .
-RUN ./x.py build --compiler=clang -DENABLE_OPENSSL=ON -DPORTABLE=1 -DCMAKE_BUILD_TYPE=Release -j $(nproc) $MORE_BUILD_ARGS
+RUN apt install wget -y && wget https://github.com/jemalloc/jemalloc/archive/5.3.0.zip
+#RUN export https_proxy=http://10.2.10.197:7890 export http_proxy=http://10.2.10.197:7890
+RUN ./x.py build --compiler=clang -DENABLE_LUAJIT=OFF -DENABLE_OPENSSL=ON -DPORTABLE=1 -DCMAKE_BUILD_TYPE=Release -j $(nproc) $MORE_BUILD_ARGS
 
-FROM debian:bookworm-slim
+#FROM debian:bookworm-slim
+FROM lcr.loongnix.cn/library/debian:forky-slim
 
-RUN DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get upgrade -y && apt-get -y install openssl ca-certificates redis-tools binutils && apt-get clean
+RUN rm -rf /etc/apt/sources.list.d/debian.sources && echo "deb http://deb.debian.org/debian unstable main" > /etc/apt/sources.list && \
+    apt-get update && apt-get upgrade -y && apt-get -y install openssl ca-certificates redis-tools binutils && apt-get clean
 
 # Create a dedicated non-root user and group
 RUN groupadd -r kvrocks && useradd -r -g kvrocks kvrocks
