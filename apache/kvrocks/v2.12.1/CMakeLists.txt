@@ -273,6 +273,9 @@ endif()
 if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10))
     set(ENABLE_IPO OFF)
 endif()
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "loongarch64")
+    set(ENABLE_IPO OFF)
+endif()
 
 if(ENABLE_IPO)
     include(CheckIPOSupported)
@@ -297,6 +300,10 @@ file(GLOB KVROCKS2REDIS_SRCS utils/kvrocks2redis/*.cc)
 add_executable(kvrocks2redis ${KVROCKS2REDIS_SRCS})
 
 target_link_libraries(kvrocks2redis PRIVATE kvrocks_objs ${EXTERNAL_LIBS})
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "loongarch64")
+    target_link_libraries(kvrocks2redis PRIVATE -latomic)
+    target_link_libraries(kvrocks PRIVATE -latomic)
+endif()
 
 # kvrocks unit tests
 file(GLOB_RECURSE TESTS_SRCS tests/cppunit/*.cc)
