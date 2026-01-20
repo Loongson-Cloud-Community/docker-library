@@ -1,0 +1,85 @@
+From ae604b1ea49278eb2cb37a20e81b9f24a0e9c20b Mon Sep 17 00:00:00 2001
+From: qiangxuhui <qiangxuhui>
+Date: Tue, 20 Jan 2026 20:06:46 +0800
+Subject: [PATCH] add loong64 support
+
+---
+ Dockerfile | 8 ++++----
+ go.mod     | 2 ++
+ go.sum     | 4 ++--
+ 3 files changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 473370c5b3..17b6191a39 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -4,7 +4,7 @@
+ 
+ ###############################################################################
+ # Base build image
+-FROM golang:1.22-alpine AS build_base
++FROM lcr.loongnix.cn/library/golang:1.22-alpine AS build_base
+ RUN apk add bash ca-certificates git gcc g++ libc-dev
+ WORKDIR /go/src/github.com/weaviate/weaviate
+ ENV GO111MODULE=on
+@@ -23,7 +23,7 @@ ARG BUILD_USER="unknown"
+ ARG BUILD_DATE="unknown"
+ ARG EXTRA_BUILD_ARGS=""
+ COPY . .
+-RUN GOOS=linux GOARCH=$TARGETARCH go build $EXTRA_BUILD_ARGS \
++RUN GOOS=linux GOARCH=loong64 go build $EXTRA_BUILD_ARGS \
+       -ldflags '-w -extldflags "-static" \
+       -X github.com/weaviate/weaviate/usecases/build.Branch='"$GIT_BRANCH"' \
+       -X github.com/weaviate/weaviate/usecases/build.Revision='"$GIT_REVISION"' \
+@@ -39,13 +39,13 @@ ENTRYPOINT ["./tools/dev/telemetry_mock_api.sh"]
+ 
+ ###############################################################################
+ # This image gets grpc health check probe
+-FROM golang:1.22-alpine AS grpc_health_probe_builder
++FROM lcr.loongnix.cn/library/golang:1.22-alpine AS grpc_health_probe_builder
+ RUN go install github.com/grpc-ecosystem/grpc-health-probe@v0.4.34
+ RUN GOBIN=/go/bin && chmod +x ${GOBIN}/grpc-health-probe && mv ${GOBIN}/grpc-health-probe /bin/grpc_health_probe
+ 
+ ###############################################################################
+ # Weaviate (no differentiation between dev/test/prod - 12 factor!)
+-FROM alpine AS weaviate
++FROM lcr.loongnix.cn/library/alpine:3.21 AS weaviate
+ ENTRYPOINT ["/bin/weaviate"]
+ COPY --from=grpc_health_probe_builder /bin/grpc_health_probe /bin/
+ COPY --from=server_builder /weaviate-server /bin/weaviate
+diff --git a/go.mod b/go.mod
+index 018447fadd..6983457746 100644
+--- a/go.mod
++++ b/go.mod
+@@ -211,4 +211,6 @@ require (
+ 	gopkg.in/yaml.v3 v3.0.1 // indirect
+ )
+ 
++replace github.com/boltdb/bolt => go.etcd.io/bbolt v1.3.7
++
+ go 1.22
+diff --git a/go.sum b/go.sum
+index df8059dad2..031e044240 100644
+--- a/go.sum
++++ b/go.sum
+@@ -92,8 +92,6 @@ github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
+ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
+ github.com/bmatcuk/doublestar v1.1.3 h1:S4Ka/fLvUtm+5TqKuByWyuGenBjTP8w+Z/GpQIWB9Yg=
+ github.com/bmatcuk/doublestar v1.1.3/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9MEoZQC/PmE=
+-github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
+-github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
+ github.com/buger/jsonparser v1.1.1 h1:2PnMjfWD7wBILjqQbt530v576A/cAbQvEW9gGIpYMUs=
+ github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx27UK13J/0=
+ github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
+@@ -630,6 +628,8 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
+ github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+ github.com/yusufpapurcu/wmi v1.2.3 h1:E1ctvB7uKFMOJw3fdOW32DwGE9I7t++CRUEMKvFoFiw=
+ github.com/yusufpapurcu/wmi v1.2.3/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
++go.etcd.io/bbolt v1.3.7 h1:j+zJOnnEjF/kyHlDDgGnVL/AIqIJPq8UoB2GSNfkUfQ=
++go.etcd.io/bbolt v1.3.7/go.mod h1:N9Mkw9X8x5fupy0IKsmuqVtoGDyxsaDlbk4Rd05IAQw=
+ go.etcd.io/bbolt v1.3.11 h1:yGEzV1wPz2yVCLsD8ZAiGHhHVlczyC9d1rP43/VCRJ0=
+ go.etcd.io/bbolt v1.3.11/go.mod h1:dksAq7YMXoljX0xu6VF5DMZGbhYYoLUalEiSySYAS4I=
+ go.mongodb.org/mongo-driver v1.7.3/go.mod h1:NqaYOwnXWr5Pm7AOpO5QFxKJ503nbMse/R79oO62zWg=
+-- 
+2.43.0
+
