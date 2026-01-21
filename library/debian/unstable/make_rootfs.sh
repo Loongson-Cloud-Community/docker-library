@@ -2,7 +2,7 @@
 set -o errexit
 set -o nounset
 
-MIRROR_ADDRESS="http://mirrors.ustc.edu.cn/debian"
+MIRROR_ADDRESS="https://ftp.debian.org/debian/"
 RELEASE="unstable"
 ROOTFS="rootfs.tar.xz"
 
