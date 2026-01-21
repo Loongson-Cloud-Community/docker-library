@@ -4,7 +4,7 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM lcr.loongnix.cn/library/debian:sid
+FROM lcr.loongnix.cn/library/debian:unstable
 
 # ensure local python is preferred over distribution python
 ENV PATH /usr/local/bin:$PATH
