@@ -1,0 +1,7 @@
+[Devel]
+name=AnolisOS-$releasever - Devel
+baseurl=http://mirrors.openanolis.cn/anolis/$releasever/Devel/$basearch/os
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ANOLIS
+gpgcheck=1
+
