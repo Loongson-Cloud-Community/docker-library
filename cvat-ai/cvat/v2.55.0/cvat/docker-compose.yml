@@ -344,7 +344,7 @@ services:
 
   cvat_vector:
     container_name: cvat_vector
-    image: timberio/vector:0.26.0-alpine
+    image: lcr.loongnix.cn/timberio/vector:v0.44.0-alpine
     user: "1000:1000" # Workaround for <https://github.com/vectordotdev/vector/issues/1599>.
     restart: always
     depends_on:
