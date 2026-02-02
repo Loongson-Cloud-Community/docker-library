@@ -1,17 +1,17 @@
-From 72417949048fab6acd42c779201874a4d4216cbb Mon Sep 17 00:00:00 2001
+From 88e8a56f88e42d195407e9274f84ba14721950de Mon Sep 17 00:00:00 2001
 From: zhangguanzhang <zhangguanzhang@qq.com>
 Date: Mon, 22 Dec 2025 14:13:22 +0800
 Subject: [PATCH] support loong64
 
 Signed-off-by: zhangguanzhang <zhangguanzhang@qq.com>
 ---
- Dockerfile       | 51 +++++++-----------------------------------------
- Makefile         |  7 ++++---
- pkg/build/cmd.go |  4 ++++
- 3 files changed, 15 insertions(+), 47 deletions(-)
+ Dockerfile       | 75 +++++++++++++++---------------------------------
+ Makefile         |  7 +++--
+ pkg/build/cmd.go |  4 +++
+ 3 files changed, 31 insertions(+), 55 deletions(-)
 
 diff --git a/Dockerfile b/Dockerfile
-index 7c396354116..eb9acb97a1a 100644
+index 7c396354116..d1b47ebe26c 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -1,10 +1,9 @@
@@ -66,7 +66,38 @@ index 7c396354116..eb9acb97a1a 100644
  # Golang build stage
  FROM ${GO_IMAGE} AS go-builder
  
-@@ -71,7 +44,7 @@ COPY .citools .citools
+@@ -53,15 +26,22 @@ ARG BUILD_BRANCH=""
+ ARG GO_BUILD_TAGS="oss"
+ ARG WIRE_TAGS="oss"
+ ARG BINGO="true"
++ARG GOPROXY=""
+ 
+-RUN if grep -i -q alpine /etc/issue; then \
+-  apk add --no-cache \
+-  # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+-  binutils-gold \
+-  bash \
+-  # Install build dependencies
+-  gcc g++ make git; \
+-  fi
++RUN set -eux; \
++  if grep -i -q alpine /etc/issue; then \
++    sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories; \
++    apk add --no-cache \
++    bash \
++    # Install build dependencies
++    gcc g++ make git; \
++    ver=`awk -F '[=.]+' '$1=="VERSION_ID"{print $3}' /etc/os-release`; \
++    if [ "${ver}" -ge 23 ];then \
++      apk add --no-cache \
++      # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
++      binutils-gold; \
++    fi; \
++  fi;
+ 
+ WORKDIR /tmp/grafana
+ 
+@@ -71,7 +51,7 @@ COPY .citools .citools
  
  # Include vendored dependencies
  COPY pkg/util/xorm pkg/util/xorm
@@ -75,15 +106,15 @@ index 7c396354116..eb9acb97a1a 100644
  COPY pkg/apis/secret pkg/apis/secret
  COPY pkg/apiserver pkg/apiserver
  COPY pkg/apimachinery pkg/apimachinery
-@@ -93,6 +66,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
+@@ -93,6 +73,7 @@ COPY apps/alerting/notifications apps/alerting/notifications
  COPY pkg/codegen pkg/codegen
  COPY pkg/plugins/codegen pkg/plugins/codegen
  
-+ENV GOPROXY=https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,https://goproxy.io,direct
++ENV GOPROXY=${GOPROXY}
  RUN go mod download
  RUN if [[ "$BINGO" = "true" ]]; then \
    go install github.com/bwplotka/bingo@latest && \
-@@ -116,17 +90,6 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
+@@ -116,17 +97,6 @@ ENV BUILD_BRANCH=${BUILD_BRANCH}
  
  RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
  
@@ -101,7 +132,15 @@ index 7c396354116..eb9acb97a1a 100644
  
  # helpers for COPY --from
  FROM ${GO_SRC} AS go-src
-@@ -213,8 +176,8 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
+@@ -153,6 +123,7 @@ WORKDIR $GF_PATHS_HOME
+ 
+ # Install dependencies
+ RUN if grep -i -q alpine /etc/issue; then \
++  sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+   apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+   apk info -vv | sort; \
+   elif grep -i -q ubuntu /etc/issue; then \
+@@ -213,8 +184,8 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
    chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
  
  COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
