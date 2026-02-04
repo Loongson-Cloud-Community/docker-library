@@ -31,12 +31,10 @@ repo_conf="${repo_dir}/AnolisOS.repo"
 setting_scripts=setting.sh
 
 pkg_list="
- basesystem bash ca-certificates anolis-gpg-keys anolis-release
- anolis-repos chkconfig cracklib crypto-policies  dnf passwd
- expat gawk gdbm glib2 glibc gmp gnupg2 gpgme grep ima-evm-utils
- json-c mpfr ncurses-base procps rpm-build git findutils dnf-plugins-core
- npth p11-kit p11-kit-trust pcre pcre2 popt readline rootfiles
- rpm sed setup systemd systemd-libs tzdata util-linux vim-minimal xz yum cracklib-dicts
+ basesystem bash ca-certificates chkconfig cracklib crypto-policies
+ dnf expat gawk gdbm glib2 glibc gmp grep ima-evm-utils json-c mpfr
+ findutils dnf-plugins-core p11-kit pcre2 popt readline rootfiles
+ rpm sed setup systemd tzdata util-linux xz vim-minimal
 "
 #pkg_list="
 # acl basesystem bash ca-certificates anolis-gpg-keys anolis-release
