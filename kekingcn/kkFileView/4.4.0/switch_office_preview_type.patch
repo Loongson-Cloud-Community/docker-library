@@ -1,0 +1,13 @@
+diff --git a/server/src/main/config/application.properties b/server/src/main/config/application.properties
+index 251f5d69..c1a10738 100644
+--- a/server/src/main/config/application.properties
++++ b/server/src/main/config/application.properties
+@@ -131,7 +131,7 @@ pdf.bookmark.disable = ${KK_PDF_BOOKMARK_DISABLE:true}
+ #是否禁止签名
+ pdf.disable.editing = ${KK_PDF_DISABLE_EDITING:false}
+ #office类型文档(word ppt)样式，默认为图片(image)，可配置为pdf（预览时也有按钮切换）
+-office.preview.type = ${KK_OFFICE_PREVIEW_TYPE:image}
++office.preview.type = ${KK_OFFICE_PREVIEW_TYPE:pdf}
+ #是否关闭office预览切换开关，默认为false，可配置为true关闭
+ office.preview.switch.disabled = ${KK_OFFICE_PREVIEW_SWITCH_DISABLED:false}
+ 
