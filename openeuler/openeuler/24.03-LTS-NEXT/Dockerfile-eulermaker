@@ -3,4 +3,5 @@ MAINTAINER zhangwenlong@loongson.cn
 ADD openEuler-24.03.rootfs.loongarch64.tar.gz /
 RUN yum install -y git-lfs gdb-gdbserver
 RUN git lfs install
+RUN sed -i 's|RPM_BUILD_NCPUS="%{getncpus}"|RPM_BUILD_NCPUS="%{expr:%{getncpus} > 32 ? %{getncpus} / 8 : 4}"|' /usr/lib/rpm/macros
 CMD ["/bin/bash"]
