@@ -19,7 +19,7 @@ fi
 
 output="openEuler-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems4/repositories/openEuler-24.03-LTS-SP2-everything:loongarch/openEuler%3A24.03-LTS-SP2/loongarch64/"
+repos_baseos_url="https://dl-cdn.openeuler.openatom.cn/openEuler-24.03-LTS-SP3/everything/loongarch64/"
 
 trap cleanup TERM EXIT
 

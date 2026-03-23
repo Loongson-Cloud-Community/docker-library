@@ -11,6 +11,7 @@ RUN rm -rf /etc/yum.repos.d/openEuler.repo ;\
     npth p11-kit p11-kit-trust pcre2 popt readline rootfiles \
     rpm sed setup systemd-libs tzdata vim-minimal xz yum \
     git git-core make gcc procps rpm-build findutils dnf-plugins-core
+RUN sed -i 's|RPM_BUILD_NCPUS="%{getncpus}"|RPM_BUILD_NCPUS="%{expr:%{getncpus} > 32 ? %{getncpus} / 8 : 4}"|' /usr/lib/rpm/macros
 RUN git lfs install
 RUN echo "timeout=120" >> /etc/yum.conf ; echo "minrate=0" >> /etc/yum.conf ; echo "retries=5" >> /etc/yum.conf
 CMD ["/bin/bash"]
