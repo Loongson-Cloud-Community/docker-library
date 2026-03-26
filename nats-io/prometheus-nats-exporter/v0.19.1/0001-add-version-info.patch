@@ -1,0 +1,32 @@
+From e9f9c2d0b4b54078ff19d9394780cecc0bbd8d62 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Thu, 26 Mar 2026 14:25:07 +0800
+Subject: [PATCH] add version info
+
+---
+ Makefile | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index fa54d71..209da02 100644
+--- a/Makefile
++++ b/Makefile
+@@ -10,8 +10,14 @@ dockerx:
+ 	docker buildx bake --load
+ 
+ .PHONY: build
++# 获取版本信息
++VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "unknown")
++COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
++BUILD_DATE ?= $(shell date -u +'%Y-%m-%d_%I:%M:%S%p')
++LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(BUILD_DATE)
++
+ build:
+-	go build
++	go build -ldflags="$(LDFLAGS)"
+ 
+ .PHONY: test
+ test:
+-- 
+2.47.3
+
