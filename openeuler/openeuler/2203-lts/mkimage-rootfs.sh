@@ -33,10 +33,11 @@ setting_scripts=setting.sh
 pkg_list="
  basesystem bash ca-certificates openEuler-gpg-keys openEuler-release
  openEuler-repos chkconfig cracklib crypto-policies  dnf
- expat findutils gawk gdbm glib2 glibc gmp gnupg2 gpgme grep ima-evm-utils
- json-c mpfr ncurses-base
- npth p11-kit p11-kit-trust pam pcre pcre2 popt procps-ng readline rootfiles
- rpm sed setup systemd-libs tzdata util-linux vim-minimal xz yum
+ expat gawk gdbm glib2 gmp gnupg2 gpgme grep ima-evm-utils-libs
+ json-c mpfr ncurses-base procps-ng rpm findutils
+ npth p11-kit p11-kit-trust pcre2 popt readline rootfiles
+ rpm sed setup systemd-libs tzdata vim-minimal xz yum
+ git git-core make gcc procps rpm-build findutils dnf-plugins-core
 "
 
 ####################################################################
