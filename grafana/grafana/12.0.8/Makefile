@@ -17,8 +17,8 @@ SOURCE_URL=https://github.com/grafana/grafana.git
 SOURCE=$(shell echo $(SOURCE_URL) | awk -F '/' '{print $$NF}' | awk -F '.' '{print $$1}')
 PATCH=0001-support-loong64.patch
 
-GOPROXY ?= https://goproxy.cn,https://mirrors.aliyun.com/goproxy/,https://goproxy.io,direct
-GO_IMG ?= $(REGISTRY)/library/golang:1.25
+GOPROXY ?= https://mirrors.aliyun.com/goproxy/,https://goproxy.io,direct
+GO_IMG ?= $(REGISTRY)/library/golang:1.25-alpine
 
 default: image
 
