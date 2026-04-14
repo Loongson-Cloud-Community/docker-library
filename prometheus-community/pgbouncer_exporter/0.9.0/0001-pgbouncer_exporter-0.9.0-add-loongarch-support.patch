@@ -1,0 +1,68 @@
+From ecf32799fedb8e7097200780e8721ca693b99307 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Tue, 14 Apr 2026 10:30:57 +0800
+Subject: [PATCH] pgbouncer_exporter 0.9.0 add loongarch support
+
+---
+ Dockerfile      | 12 ++++++++----
+ Makefile        |  2 +-
+ Makefile.common |  5 ++++-
+ 3 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/Dockerfile b/Dockerfile
+index 27799eb..766747f 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,11 +1,15 @@
+-ARG ARCH="amd64"
++ARG ARCH="loong64"
+ ARG OS="linux"
+-FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
++FROM lcr.loongnix.cn/prometheus/busybox:1.32.0-glibc
+ LABEL maintainer="The Prometheus Authors <prometheus-developers@googlegroups.com>"
+ 
+-ARG ARCH="amd64"
++ARG ARCH="loong64"
+ ARG OS="linux"
+-COPY .build/${OS}-${ARCH}/pgbouncer_exporter /bin/pgbouncer_exporter
++
++#Fix the permission issue of /etc in the base image busybox
++RUN chmod 755 /etc
++
++COPY ./pgbouncer_exporter /bin/pgbouncer_exporter
+ COPY LICENSE                                /LICENSE
+ 
+ USER       nobody
+diff --git a/Makefile b/Makefile
+index 870a78d..4c037ec 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,7 +12,7 @@
+ # limitations under the License.
+ 
+ # Needs to be defined before including Makefile.common to auto-generate targets
+-DOCKER_ARCHS ?= amd64 armv7 arm64
++DOCKER_ARCHS ?= loong64 amd64 armv7 arm64
+ DOCKER_REPO  ?= prometheuscommunity
+ 
+ include Makefile.common
+diff --git a/Makefile.common b/Makefile.common
+index e3da72a..0ef3806 100644
+--- a/Makefile.common
++++ b/Makefile.common
+@@ -56,8 +56,11 @@ endif
+ endif
+ 
+ PROMU_VERSION ?= 0.17.0
++ifeq (loong64, $(GOHOSTARCH))
++PROMU_URL     := https://github.com/Loongson-Cloud-Community/promu/releases/download/v0.17.0/promu-0.17.0.linux-loong64-abi2.0.tar.gz
++else
+ PROMU_URL     := https://github.com/prometheus/promu/releases/download/v$(PROMU_VERSION)/promu-$(PROMU_VERSION).$(GO_BUILD_PLATFORM).tar.gz
+-
++endif
+ SKIP_GOLANGCI_LINT :=
+ GOLANGCI_LINT :=
+ GOLANGCI_LINT_OPTS ?=
+-- 
+2.47.3
+
