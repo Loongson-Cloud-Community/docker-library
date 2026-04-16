@@ -1,0 +1,820 @@
+From 10576b410a0d3a024c90ceccf701fd0321cf1aa2 Mon Sep 17 00:00:00 2001
+From: Huang Yang <huangyang@loongson.cn>
+Date: Wed, 15 Apr 2026 15:37:12 +0800
+Subject: [PATCH] Add loongarch support
+
+---
+ dockerfiles/bit/Dockerfile           | 14 +++++++++-----
+ dockerfiles/buildx/Dockerfile        | 12 +++++++-----
+ dockerfiles/compose/Dockerfile       | 12 +++++++-----
+ dockerfiles/dlv/Dockerfile           | 12 +++++++-----
+ dockerfiles/docker/Dockerfile        |  8 ++++----
+ dockerfiles/gh/Dockerfile            | 12 +++++++-----
+ dockerfiles/gitstatus/Dockerfile     |  8 ++++----
+ dockerfiles/go-outline/Dockerfile    | 12 +++++++-----
+ dockerfiles/gofumpt/Dockerfile       | 12 +++++++-----
+ dockerfiles/golangci-lint/Dockerfile | 12 +++++++-----
+ dockerfiles/gomock/Dockerfile        | 12 +++++++-----
+ dockerfiles/gomodifytags/Dockerfile  | 12 +++++++-----
+ dockerfiles/gopkgs/Dockerfile        | 12 +++++++-----
+ dockerfiles/goplay/Dockerfile        | 12 +++++++-----
+ dockerfiles/gopls/Dockerfile         | 12 +++++++-----
+ dockerfiles/gotests/Dockerfile       | 12 +++++++-----
+ dockerfiles/helm/Dockerfile          | 12 +++++++-----
+ dockerfiles/impl/Dockerfile          | 12 +++++++-----
+ dockerfiles/kubectl/Dockerfile       |  8 ++++----
+ dockerfiles/kubectx/Dockerfile       | 12 +++++++-----
+ dockerfiles/kubens/Dockerfile        | 12 +++++++-----
+ dockerfiles/logo-ls/Dockerfile       | 14 +++++++++-----
+ dockerfiles/mockery/Dockerfile       | 12 +++++++-----
+ dockerfiles/mockgen/Dockerfile       | 12 +++++++-----
+ dockerfiles/stern/Dockerfile         | 12 +++++++-----
+ dockerfiles/supervisord/Dockerfile   | 19 ++++++++++++++-----
+ 26 files changed, 184 insertions(+), 127 deletions(-)
+
+diff --git a/dockerfiles/bit/Dockerfile b/dockerfiles/bit/Dockerfile
+index 0642f8b..8bd9ae2 100644
+--- a/dockerfiles/bit/Dockerfile
++++ b/dockerfiles/bit/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,11 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.1.2
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/chriswalz/bit.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download && \
++    go get -u golang.org/x/sys@latest && \
++    go mod tidy
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/buildx/Dockerfile b/dockerfiles/buildx/Dockerfile
+index 2c726f3..37354fe 100644
+--- a/dockerfiles/buildx/Dockerfile
++++ b/dockerfiles/buildx/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -15,7 +15,9 @@ WORKDIR /tmp/build
+ ARG VERSION=v0.33.0
+ WORKDIR /go/src/github.com/docker/cli
+ RUN git clone --single-branch --branch ${VERSION} https://github.com/docker/buildx.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     export GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" && \
+diff --git a/dockerfiles/compose/Dockerfile b/dockerfiles/compose/Dockerfile
+index 6781a19..479ab40 100644
+--- a/dockerfiles/compose/Dockerfile
++++ b/dockerfiles/compose/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -15,7 +15,9 @@ WORKDIR /tmp/build
+ ARG VERSION=v5.1.1
+ WORKDIR /go/src/github.com/docker/cli
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/docker/compose.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/dlv/Dockerfile b/dockerfiles/dlv/Dockerfile
+index 7e890a0..09af49b 100644
+--- a/dockerfiles/dlv/Dockerfile
++++ b/dockerfiles/dlv/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.26.1
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/go-delve/delve.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     if [ "${TARGETPLATFORM}" = "linux/amd64" ] || [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+diff --git a/dockerfiles/docker/Dockerfile b/dockerfiles/docker/Dockerfile
+index c908b99..ecdd0d4 100644
+--- a/dockerfiles/docker/Dockerfile
++++ b/dockerfiles/docker/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+diff --git a/dockerfiles/gh/Dockerfile b/dockerfiles/gh/Dockerfile
+index ab6379e..d6dfcd4 100644
+--- a/dockerfiles/gh/Dockerfile
++++ b/dockerfiles/gh/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v2.89.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/cli/cli.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/gitstatus/Dockerfile b/dockerfiles/gitstatus/Dockerfile
+index ef2a586..fa4d87a 100644
+--- a/dockerfiles/gitstatus/Dockerfile
++++ b/dockerfiles/gitstatus/Dockerfile
+@@ -1,10 +1,10 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:v0.6.0 AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:v0.6.0 AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} alpine:${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/alpine:${ALPINE_VERSION} AS build
+ RUN apk add --no-cache g++ make binutils cmake git && \
+     git config --global advice.detachedHead false
+ RUN apk add --no-cache -X "https://dl-cdn.alpinelinux.org/alpine/v3.14/community" gcc-cross-embedded
+diff --git a/dockerfiles/go-outline/Dockerfile b/dockerfiles/go-outline/Dockerfile
+index d9bb2bd..1b3d187 100644
+--- a/dockerfiles/go-outline/Dockerfile
++++ b/dockerfiles/go-outline/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -15,7 +15,9 @@ WORKDIR /tmp/build
+ ARG VERSION=9736a4b
+ RUN git clone --single-branch https://github.com/ramya-rao-a/go-outline.git .
+ RUN git checkout ${VERSION}
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/gofumpt/Dockerfile b/dockerfiles/gofumpt/Dockerfile
+index af49a3e..b7e9c69 100644
+--- a/dockerfiles/gofumpt/Dockerfile
++++ b/dockerfiles/gofumpt/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.9.2
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/mvdan/gofumpt.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/golangci-lint/Dockerfile b/dockerfiles/golangci-lint/Dockerfile
+index 0957559..ca00ce1 100644
+--- a/dockerfiles/golangci-lint/Dockerfile
++++ b/dockerfiles/golangci-lint/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v2.11.4
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/golangci/golangci-lint.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ ARG GO_VERSION=1.26
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+diff --git a/dockerfiles/gomock/Dockerfile b/dockerfiles/gomock/Dockerfile
+index 0735bf6..3b096c8 100644
+--- a/dockerfiles/gomock/Dockerfile
++++ b/dockerfiles/gomock/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.6.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/uber-go/mock.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/gomodifytags/Dockerfile b/dockerfiles/gomodifytags/Dockerfile
+index 264b7d4..ab2040f 100644
+--- a/dockerfiles/gomodifytags/Dockerfile
++++ b/dockerfiles/gomodifytags/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.17.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/fatih/gomodifytags.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/gopkgs/Dockerfile b/dockerfiles/gopkgs/Dockerfile
+index c7a4424..ef3503b 100644
+--- a/dockerfiles/gopkgs/Dockerfile
++++ b/dockerfiles/gopkgs/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -15,7 +15,9 @@ WORKDIR /tmp/build
+ ARG VERSION=v2.1.2
+ RUN git clone --branch ${VERSION} --single-branch https://github.com/uudashr/gopkgs.git .
+ RUN git checkout ${VERSION}
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/goplay/Dockerfile b/dockerfiles/goplay/Dockerfile
+index a5d277b..02e51f4 100644
+--- a/dockerfiles/goplay/Dockerfile
++++ b/dockerfiles/goplay/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.0.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/haya14busa/goplay.git .
+-RUN go mod init github.com/haya14busa/goplay && \
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod init github.com/haya14busa/goplay && \
+     go mod tidy && \
+     go mod download
+ ARG TARGETPLATFORM
+diff --git a/dockerfiles/gopls/Dockerfile b/dockerfiles/gopls/Dockerfile
+index ec88ca3..8803d06 100644
+--- a/dockerfiles/gopls/Dockerfile
++++ b/dockerfiles/gopls/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.21.1
+ RUN git clone --depth 1 --branch "gopls/${VERSION}" https://github.com/golang/tools.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     cd gopls && \
+diff --git a/dockerfiles/gotests/Dockerfile b/dockerfiles/gotests/Dockerfile
+index 81d9c6a..56a1c2b 100644
+--- a/dockerfiles/gotests/Dockerfile
++++ b/dockerfiles/gotests/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.9.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/cweill/gotests.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/helm/Dockerfile b/dockerfiles/helm/Dockerfile
+index cdaae8d..b532ecb 100644
+--- a/dockerfiles/helm/Dockerfile
++++ b/dockerfiles/helm/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v4.1.3
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/helm/helm.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/impl/Dockerfile b/dockerfiles/impl/Dockerfile
+index 32c4a11..519b960 100644
+--- a/dockerfiles/impl/Dockerfile
++++ b/dockerfiles/impl/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -15,7 +15,9 @@ WORKDIR /tmp/build
+ ARG VERSION=v1.2.0
+ RUN git clone --branch ${VERSION} --single-branch https://github.com/josharian/impl.git .
+ RUN git checkout ${VERSION}
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/kubectl/Dockerfile b/dockerfiles/kubectl/Dockerfile
+index bee6528..f8ce205 100644
+--- a/dockerfiles/kubectl/Dockerfile
++++ b/dockerfiles/kubectl/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+diff --git a/dockerfiles/kubectx/Dockerfile b/dockerfiles/kubectx/Dockerfile
+index b40bc98..c4646a1 100644
+--- a/dockerfiles/kubectx/Dockerfile
++++ b/dockerfiles/kubectx/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.11.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/ahmetb/kubectx.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/kubens/Dockerfile b/dockerfiles/kubens/Dockerfile
+index 6a1a252..4e95c61 100644
+--- a/dockerfiles/kubens/Dockerfile
++++ b/dockerfiles/kubens/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.11.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/ahmetb/kubectx.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/logo-ls/Dockerfile b/dockerfiles/logo-ls/Dockerfile
+index 950ea11..3de6dc8 100644
+--- a/dockerfiles/logo-ls/Dockerfile
++++ b/dockerfiles/logo-ls/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,11 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.3.7
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/Yash-Handa/logo-ls.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download && \
++    go get -u golang.org/x/sys@latest && \
++    go mod tidy
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/mockery/Dockerfile b/dockerfiles/mockery/Dockerfile
+index d6f799e..f00b783 100644
+--- a/dockerfiles/mockery/Dockerfile
++++ b/dockerfiles/mockery/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v3.7.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/vektra/mockery.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/mockgen/Dockerfile b/dockerfiles/mockgen/Dockerfile
+index fcd584e..73e27bc 100644
+--- a/dockerfiles/mockgen/Dockerfile
++++ b/dockerfiles/mockgen/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.6.0
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/uber-go/mock.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/stern/Dockerfile b/dockerfiles/stern/Dockerfile
+index 6b264a5..baba114 100644
+--- a/dockerfiles/stern/Dockerfile
++++ b/dockerfiles/stern/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,9 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v1.33.1
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/stern/stern.git .
+-RUN go mod download
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+diff --git a/dockerfiles/supervisord/Dockerfile b/dockerfiles/supervisord/Dockerfile
+index 9aaea3f..2941b66 100644
+--- a/dockerfiles/supervisord/Dockerfile
++++ b/dockerfiles/supervisord/Dockerfile
+@@ -1,11 +1,11 @@
+-ARG ALPINE_VERSION=3.23
++ARG ALPINE_VERSION=3.22
+ ARG GO_VERSION=1.26
+ ARG XCPU_VERSION=v0.9.0
+-ARG BUILDPLATFORM=linux/amd64
++ARG BUILDPLATFORM=linux/loong64
+ 
+-FROM --platform=${BUILDPLATFORM} ghcr.io/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/qdm12/xcputranslate:${XCPU_VERSION} AS xcputranslate
+ 
+-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
++FROM --platform=${BUILDPLATFORM} lcr.loongnix.cn/library/golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS build
+ ENV CGO_ENABLED=0
+ RUN apk add --no-cache git && \
+     git config --global advice.detachedHead false
+@@ -14,7 +14,16 @@ WORKDIR /tmp/build
+ 
+ ARG VERSION=v0.7.3
+ RUN git clone --depth 1 --branch ${VERSION} https://github.com/ochinchina/supervisord.git .
+-RUN go mod download
++# 修复 SIGUNUSED 问题（适用于 loong64）
++RUN if [ "$(xcputranslate translate -field arch -targetplatform linux/loong64)" = "loong64" ]; then \
++        sed -i '/syscall.SIGUNUSED/d' signals/signal.go; \
++    fi
++
++RUN go env -w GOPROXY=https://goproxy.cn,direct && \
++    go env -w GOSUMDB=sum.golang.google.cn && \
++    go mod download && \
++    go get -u golang.org/x/sys@latest && \
++    go mod tidy
+ ARG TARGETPLATFORM
+ RUN echo "Building for ${TARGETPLATFORM}..." && \
+     GOARCH="$(xcputranslate translate -field arch -targetplatform ${TARGETPLATFORM})" \
+-- 
+2.47.3
+
