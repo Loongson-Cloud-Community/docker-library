@@ -23,7 +23,7 @@ index fa54d71..209da02 100644
 +
  build:
 -	go build
-+	go build -ldflags="$(LDFLAGS)"
++	CGO_ENABLED=0 go build -ldflags="$(LDFLAGS)"
  
  .PHONY: test
  test:
