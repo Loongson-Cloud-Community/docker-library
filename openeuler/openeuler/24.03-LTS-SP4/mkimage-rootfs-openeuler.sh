@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# for oepneuler 22.03-LTS
+# for openEuler 24.03
 # create rootfs.tar from repository
 #
 #set -x
@@ -9,8 +9,8 @@ set -e
 
 arch=loongarch64
 #release=$1
-releasever=22.03-LTS
-version=22.03-LTS
+releasever=24.03
+version=24.03
 if [ -z $version ]
 then
         echo "releasever or version is empty!!!"
@@ -19,7 +19,7 @@ fi
 
 output="openEuler-${version}.rootfs.${arch}.tar.gz"
 
-repos_baseos_url="http://repo.openeuler.org/openEuler-22.03-LTS/OS/loongarch64/"
+repos_baseos_url="https://eulermaker.openeuler.openatom.cn/api/ems2/repositories/openEuler-24.03-LTS-SP4-everything:loongarch/openEuler%3A24.03-LTS-SP4/loongarch64/"
 
 trap cleanup TERM EXIT
 
@@ -31,7 +31,7 @@ repo_conf="${repo_dir}/openEuler.repo"
 setting_scripts=setting.sh
 
 pkg_list="
- basesystem bash ca-certificates openEuler-gpg-keys openEuler-release
+ basesystem bash ca-certificates openEuler-release openEuler-gpg-keys
  openEuler-repos chkconfig cracklib crypto-policies  dnf
  expat gawk gdbm glib2 gmp gnupg2 gpgme grep ima-evm-utils-libs
  json-c mpfr ncurses-base procps-ng rpm findutils
@@ -54,44 +54,14 @@ mkdir -pv ${repo_dir} || :
 # gen repos conf
 ####################################################################
 cat > ${repo_conf} << EOF
-#PURPOSE.
-#See the Mulan PSL v2 for more details.
-
-[OS]
-name=OS
-baseurl=http://repo.openeuler.org/openEuler-22.03-LTS/OS/${arch}/
-metalink=https://mirrors.openeuler.org/metalink?repo=$releasever/OS&arch=${arch}
-metadata_expire=1h
-enabled=1
+[baseos]
+name=openEuler-$releasever-next
+baseurl=${repos_baseos_url}
 gpgcheck=0
-
-[everything]
-name=everything
-baseurl=http://repo.openeuler.org/openEuler-22.03-LTS/everything/$arch/
-metalink=https://mirrors.openeuler.org/metalink?repo=$releasever/everything&arch=$arch
-metadata_expire=1h
 enabled=1
-gpgcheck=0
-
-[EPOL]
-name=EPOL
-baseurl=http://repo.openeuler.org/openEuler-22.03-LTS/EPOL/main/$arch/
-metalink=https://mirrors.openeuler.org/metalink?repo=$releasever/EPOL/main&arch=$arch
-metadata_expire=1h
-enabled=1
-gpgcheck=0
-
-[debuginfo]
-name=debuginfo
-enabled=0
-
-[source]
-name=source
-baseurl=http://repo.openeuler.org/openEuler-22.03-LTS/source/
-metalink=https://mirrors.openeuler.org/metalink?repo=$releasever&arch=source
-metadata_expire=1h
-enabled=1
-gpgcheck=0
+priority=2
+excludepkgs="${exclude_pkgs}"
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-LOONGNIX
 EOF
 ####################################################################
 
@@ -127,9 +97,9 @@ LANG="en_US"
 echo "%_install_langs $LANG" > /etc/rpm/macros.image-language-conf
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
-pushd /usr/share/locale > /dev/null
-	ls | egrep -x -v "en|en@arabic|en@boldquot|en@cyrillic|en@greek|en@hebrew|en@piglatin|en@quot|en@shaw|en_CA|en_GB|en_US|locale.alias" | xargs rm -rf
-popd > /dev/null
+#pushd /usr/share/locale > /dev/null
+#	ls | egrep -x -v "en|en@arabic|en@boldquot|en@cyrillic|en@greek|en@hebrew|en@piglatin|en@quot|en@shaw|en_CA|en_GB|en_US|locale.alias" | xargs rm -rf
+#popd > /dev/null
 
 # systemd fixes
 :> /etc/machine-id
@@ -168,10 +138,15 @@ chroot   ${rootfs} /${setting_scripts}
 #done
 
 ##解决在chroot中/dev/null没有权限问题
-#chroot ${rootfs} rm -rf /dev/null
-#chroot ${rootfs} mknod /dev/null c 1 3
-#chroot ${rootfs} chmod 666 /dev/null
+chroot ${rootfs} rm -rf /dev/null
+chroot ${rootfs} mknod /dev/null c 1 3
+chroot ${rootfs} chmod 666 /dev/null
 
+cp /etc/resolv.conf ${rootfs}/etc
+#chroot ${rootfs} yum install -y $pkg_list --repofrompath=local,$repos_baseos_url --repofrompath=local,$repos_baseos_url1 --nogpgcheck --disablerepo=OS --disablerepo=everything --disablerepo=EPOL --disablerepo=debuginfo --disablerepo=source --disablerepo=update --disablerepo=update-source
+ 
+#设置默认的/etc/localtime，修复python-dateutil测试失败
+chroot ${rootfs} ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 cur_dir=$(pwd)
 pushd ${rootfs} > /dev/null
 	if [ -e "${cur_dir}/${output}" ]; then
