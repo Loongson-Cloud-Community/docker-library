@@ -10,8 +10,8 @@ RUN rm -rf /etc/yum.repos.d/openEuler.repo ;\
     json-c mpfr ncurses-base procps-ng rpm findutils \
     npth p11-kit p11-kit-trust pcre2 popt readline rootfiles \
     rpm sed setup systemd-libs tzdata vim-minimal xz yum \
-    git git-core make gcc procps rpm-build findutils dnf-plugins-core \
-    libdb selinux-policy selinux-policy-targeted
+    git git-core make gcc procps rpm-build findutils dnf-plugins-core rpmdevtools \
+    libdb selinux-policy selinux-policy-targeted openssl
 RUN git lfs install
 RUN echo "timeout=120" >> /etc/yum.conf ; echo "minrate=0" >> /etc/yum.conf ; echo "retries=5" >> /etc/yum.conf
 CMD ["/bin/bash"]
