@@ -15,7 +15,7 @@ RUN for iter in {1..10}; do \
 
 # Add an init process, check the checksum to make sure it's a match
 RUN set -e ; \
-   curl --retry 8 -S -L -o /bin/tini https://github.com/Loongson-Cloud-Community/tini/releases/download/v0.19.0/tini-static ; \
+   curl --retry 8 -S -L -o /bin/tini https://github.com/Loongson-Cloud-Community/tini/releases/download/v0.19.0/tini-static_abi2.0 ; \
    chmod +x /bin/tini
 
 RUN mkdir /usr/share/fonts/local
