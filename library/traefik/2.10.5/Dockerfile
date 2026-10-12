@@ -1,5 +1,6 @@
-FROM lcr.loongnix.cn/library/alpine:3.19
-RUN apk --no-cache add ca-certificates tzdata
+FROM lcr.loongnix.cn/library/alpine:3.24.2
+RUN apk update & \
+    apk --no-cache add ca-certificates tzdata
 RUN cat /etc/hosts
 RUN set -ex; \
 	apkArch="$(apk --print-arch)"; \
@@ -7,7 +8,7 @@ RUN set -ex; \
                 loongarch64) arch='loong64' ;;\
 		*) echo >&2 "error: unsupported architecture: $apkArch"; exit 1 ;; \
 	esac; \
-	wget --quiet -O /tmp/traefik.tar.gz "http://cloud.loongnix.cn/releases/loongarch64/traefik/traefik/2.10.5/traefik_v2.10.5_linux_loong64.tar.gz"; \
+	wget --quiet -O /tmp/traefik.tar.gz "https://cloud.loongnix.cn/releases/loongarch64/traefik/traefik/2.10.5/traefik_v2.10.5_linux_loong64.tar.gz"; \
 	tar xzvf /tmp/traefik.tar.gz -C /usr/local/bin traefik; \
 	rm -f /tmp/traefik.tar.gz; \
 	chmod +x /usr/local/bin/traefik
