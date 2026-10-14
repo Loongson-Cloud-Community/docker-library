@@ -11,7 +11,7 @@ RUN rm -rf /etc/yum.repos.d/openEuler.repo ;\
     npth p11-kit p11-kit-trust pcre2 popt readline rootfiles \
     rpm sed setup systemd-libs tzdata vim-minimal xz yum \
     git git-core make gcc procps rpm-build findutils dnf-plugins-core rpmdevtools \
-    libdb selinux-policy selinux-policy-targeted openssl check-devel; \
+    libdb selinux-policy selinux-policy-targeted openssl; \
     rm -rf /etc/yum.repos.d/openEuler.repo ;\
     yum reinstall --repofrompath=local,$repos_baseos_url --nogpgcheck -y systemd
 
